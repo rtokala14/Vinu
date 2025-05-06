@@ -1,0 +1,40 @@
+{
+  "cesVersion": "2.18.0",
+  "projectName": "Vinu",
+  "packages": [
+    {
+      "name": "expo-router",
+      "type": "navigation",
+      "options": {
+        "type": "stack"
+      }
+    },
+    {
+      "name": "nativewind",
+      "type": "styling"
+    },
+    {
+      "name": "zustand",
+      "type": "state-management"
+    }
+  ],
+  "flags": {
+    "noGit": false,
+    "noInstall": false,
+    "overwrite": false,
+    "importAlias": true,
+    "packageManager": "bun",
+    "eas": true,
+    "publish": false
+  },
+  "packageManager": {
+    "type": "bun",
+    "version": "1.2.8"
+  },
+  "os": {
+    "type": "Linux",
+    "platform": "linux",
+    "arch": "x64",
+    "kernelVersion": "6.14.4-arch1-2"
+  }
+}
