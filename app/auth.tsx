@@ -1,3 +1,4 @@
+import { use$ } from '@legendapp/state/react';
 import axios from 'axios';
 import React, { useState, useRef } from 'react';
 import {
@@ -35,18 +36,17 @@ import { Separator } from '~/components/ui/separator';
 import { Text } from '~/components/ui/text';
 import { Muted } from '~/components/ui/typography';
 import { parseServerUrl } from '~/lib/utils';
-import { useAuthActions, useServerUrl, useUser } from '~/stores/auth';
+import { store$ } from '~/stores';
 
 export default function Home() {
-  const { setUser, setServerUrl, setAuthorized } = useAuthActions();
   const [loginStep, setLoginStep] = useState(1);
 
   const [testConnState, setTestConnState] = useState<'idle' | 'loading' | 'success' | 'error'>(
     'idle'
   );
 
-  const parsedUrl = parseServerUrl(useServerUrl());
-  const existingUser = useUser();
+  const parsedUrl = parseServerUrl(store$.settings.serverUrl.peek());
+  const existingUser = use$(store$.user.peek());
 
   const [loginState, setLoginState] = useState<{
     protocol: 'http' | 'https';
@@ -73,8 +73,9 @@ export default function Home() {
   } = useLogin({
     mutation: {
       onSuccess: (data) => {
-        setUser(data.user);
-        setAuthorized(true);
+        store$.user.set(data.user);
+        store$.isAuthorized.set(true);
+        store$.userToken.set(data.user?.token!);
         // console.log('Login successful: ', data.user);
       },
       onError: (error) => {
@@ -89,7 +90,7 @@ export default function Home() {
       const res = await axios.get(serverUrl, { timeout: 3000 }).then((res) => res);
       if (res.status === 200) {
         setTestConnState('success');
-        setServerUrl(serverUrl);
+        store$.settings.serverUrl.set(serverUrl);
         setLoginStep(2);
         return true;
       } else {

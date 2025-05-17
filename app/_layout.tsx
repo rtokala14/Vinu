@@ -1,6 +1,10 @@
 import '../global.css';
 
+import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv';
+import { use$ } from '@legendapp/state/react';
+import { syncObservable } from '@legendapp/state/sync';
 import { DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native';
+import { PortalHost } from '@rn-primitives/portal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import axios from 'axios';
 import { SplashScreen, Stack } from 'expo-router';
@@ -10,7 +14,7 @@ import { useLayoutEffect, useState } from 'react';
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
-import { useAuthActions, useAuthorized, useServerUrl, useUser } from '~/stores/auth';
+import { store$ } from '~/stores';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -28,48 +32,52 @@ export { ErrorBoundary } from 'expo-router';
 
 const queryClient = new QueryClient();
 
+syncObservable(store$, {
+  persist: {
+    name: 'vinu-state',
+    plugin: ObservablePersistMMKV,
+  },
+});
+
 export default function Layout() {
-  const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const { isDarkColorScheme, setColorScheme } = useColorScheme();
   const [isAppReady, setIsAppReady] = useState(false);
 
-  const isAuthorized = useAuthorized();
-  const serverUrl = useServerUrl();
-  const prevUser = useUser();
-  const { setUser, setAuthorized } = useAuthActions();
+  const serverUrl = use$(store$.settings.serverUrl);
+  const userToken = use$(store$.userToken);
+
+  const isAuthorized = use$(store$.isAuthorized);
 
   useLayoutEffect(() => {
     async function prepareApp() {
       try {
-        setAndroidNavigationBar(colorScheme);
+        setColorScheme(store$.settings.theme.peek());
+        setAndroidNavigationBar(store$.settings.theme.peek());
 
-        if (isAuthorized) {
-        } else if (serverUrl && prevUser?.token) {
+        if (serverUrl && userToken !== undefined) {
           try {
             const res = await axios.post(
               `${serverUrl}/api/authorize`,
               {},
               {
                 headers: {
-                  Authorization: `Bearer ${prevUser.token}`,
+                  Authorization: `Bearer ${userToken}`,
                 },
                 timeout: 3000,
               }
             );
             if (res.status === 200 && res.data.user) {
-              setAuthorized(true);
-              setUser(res.data.user);
+              store$.user.set(res.data.user);
             } else {
-              setAuthorized(false);
+              store$.user.set(undefined);
             }
           } catch (error) {
             console.error('Auto-authorization failed: ', error);
-            setAuthorized(false);
-            setUser(undefined);
+            store$.user.set(undefined);
           }
         }
       } catch (e) {
         console.warn('Error during app preparation: ', e);
-        setAuthorized(false);
       } finally {
         setIsAppReady(true);
         SplashScreen.hideAsync();
@@ -99,6 +107,7 @@ export default function Layout() {
             <Stack.Screen name="auth" options={{ animation: 'slide_from_left' }} />
           </Stack.Protected>
         </Stack>
+        <PortalHost />
       </ThemeProvider>
     </QueryClientProvider>
   );
