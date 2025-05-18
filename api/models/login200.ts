@@ -9,4 +9,5 @@ import type { User } from './user';
 
 export type Login200 = {
   user?: User;
+  userDefaultLibraryId: string;
 };

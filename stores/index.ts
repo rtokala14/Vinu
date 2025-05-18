@@ -9,6 +9,8 @@ export const store$ = observable({
   },
   user: undefined as User | undefined,
   userToken: undefined as string | undefined,
+  userDefaultLibraryId: undefined as string | undefined,
+  // serverSettings: undefined as ServerSettings | undefined,
   isAuthorized: (): boolean => {
     return !!store$.user.get() && !!store$.userToken.get();
   },

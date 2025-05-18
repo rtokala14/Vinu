@@ -76,6 +76,7 @@ export default function Home() {
         store$.user.set(data.user);
         store$.isAuthorized.set(true);
         store$.userToken.set(data.user?.token!);
+        store$.userDefaultLibraryId.set(data.userDefaultLibraryId);
         // console.log('Login successful: ', data.user);
       },
       onError: (error) => {
