@@ -1,3 +1,4 @@
+import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
@@ -12,6 +13,8 @@ interface SeriesItemProps {
 }
 
 export function SeriesItem({ item }: SeriesItemProps) {
+  const { colors } = useTheme();
+
   const numBooks = item.books?.length || 0;
   const covers = (item.books || []).slice(0, 7);
   const baseWidth = 96;
@@ -39,10 +42,12 @@ export function SeriesItem({ item }: SeriesItemProps) {
               borderRadius: 6,
               marginLeft: idx === 0 ? 0 : gap,
               borderWidth: 1,
-              borderColor: '#fff',
+              borderColor: colors.border,
+              backgroundColor: colors.card,
               zIndex: -idx,
             }}
             contentFit="cover"
+            recyclingKey={book.id}
             placeholderContentFit="cover"
             transition={500}
           />

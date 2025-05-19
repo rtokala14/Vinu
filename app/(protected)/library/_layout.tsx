@@ -37,11 +37,9 @@ export default function LibraryLayout() {
         tabBarItemStyle: { width: 'auto', minWidth: 100 },
         tabBarStyle: {
           backgroundColor: colors.card,
-          borderTopStartRadius: 10,
-          borderTopEndRadius: 10,
           shadowRadius: 10,
-          height: 50 + insets.top,
-          paddingTop: insets.top,
+          height: 40 + insets.top,
+          paddingTop: insets.top - 10,
         },
       }}>
       <MaterialTopTabs.Screen

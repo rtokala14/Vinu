@@ -10,7 +10,8 @@ import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
 
 export default function SeriesPage() {
-  const userLibraryId = store$.userDefaultLibraryId.get();
+  const userLibraryId = store$.currentLibraryId.get();
+
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['series', userLibraryId],
     initialPageParam: 0,
@@ -48,10 +49,12 @@ export default function SeriesPage() {
         data={seriesItems}
         renderItem={({ item }: { item: any }) => <SeriesItem item={item} />}
         numColumns={1}
+        recycleItems
         keyExtractor={(item: any) => item.id!}
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 4 }}
         columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
         estimatedItemSize={145}
+        onEndReachedThreshold={3}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}
