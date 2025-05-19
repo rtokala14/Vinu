@@ -7,6 +7,7 @@ export const AXIOS_INSTANCE = Axios.create();
 AXIOS_INSTANCE.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const serverUrl = store$.settings.serverUrl.get();
+    const userToken = store$.userToken.get();
 
     if (serverUrl && serverUrl !== '') {
       config.baseURL = serverUrl;
@@ -18,6 +19,12 @@ AXIOS_INSTANCE.interceptors.request.use(
         );
       }
     }
+
+    if (userToken) {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${userToken}`;
+    }
+
     return config;
   },
   (error) => {

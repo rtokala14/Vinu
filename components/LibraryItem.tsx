@@ -21,7 +21,7 @@ export function LibraryItem({ item }: { item: LibraryItemBase }) {
             Authorization: `Bearer ${store$.userToken.peek()}`,
           },
         }}
-        style={{ width: 150, height: 200, borderRadius: 8 }}
+        style={{ width: 150, height: 225, borderRadius: 8 }}
         contentFit="cover"
         placeholder={blurhash}
         placeholderContentFit="cover"

@@ -31,7 +31,7 @@ export default function AllPage() {
         keyExtractor={(item) => item.id!}
         contentContainerStyle={{ padding: 4 }}
         columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-        estimatedItemSize={240}
+        estimatedItemSize={230}
       />
     </Container>
   );
