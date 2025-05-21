@@ -4,6 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { customAxios } from '~/api/custom-axios';
 import { GetLibraryAuthors200 } from '~/api/models';
 import { AuthorItem } from '~/components/AuthorItem';
+import AuthorItemSkeleton from '~/components/AuthorItemSkeleton';
 import { Container } from '~/components/Container';
 import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
@@ -34,7 +35,21 @@ export default function AuthorsPage() {
   const total = data?.pages[0] ? (data.pages[0] as GetLibraryAuthors200).total : 0;
 
   if (isLoading) {
-    return <Text>Loading</Text>;
+    return (
+      <Container>
+        {/* <Text>{total}</Text>  TODO: Decide if total should be shown during loading */}
+        <LegendList
+          data={Array(20).fill({})}
+          renderItem={() => <AuthorItemSkeleton />}
+          keyExtractor={(_item, index) => `skeleton-author-${index}`}
+          numColumns={2}
+          recycleItems
+          contentContainerStyle={{ padding: 4 }}
+          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
+          estimatedItemSize={230}
+        />
+      </Container>
+    );
   }
 
   if (!authors.length) {

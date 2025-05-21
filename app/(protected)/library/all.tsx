@@ -7,6 +7,7 @@ import { customAxios } from '~/api/custom-axios';
 import { GetLibraryItems200 } from '~/api/models';
 import { Container } from '~/components/Container';
 import { LibraryItem } from '~/components/LibraryItem';
+import LibraryItemSkeleton from '~/components/LibraryItemSkeleton';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
@@ -42,7 +43,20 @@ export default function AllPage() {
   const total = data?.pages[0] ? (data.pages[0] as GetLibraryItems200).total : 0;
 
   if (isLoading) {
-    return <Text>Loading</Text>;
+    return (
+      <Container>
+        <LegendList
+          data={Array(20).fill({})}
+          renderItem={() => <LibraryItemSkeleton />}
+          keyExtractor={(_item, index) => `skeleton-${index}`}
+          numColumns={2}
+          recycleItems
+          contentContainerStyle={{ padding: 4 }}
+          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
+          estimatedItemSize={180}
+        />
+      </Container>
+    );
   }
 
   if (!libraryItems.length) {

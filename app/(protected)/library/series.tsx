@@ -6,6 +6,7 @@ import { customAxios } from '~/api/custom-axios';
 import { GetLibrarySeries200 } from '~/api/models';
 import { Container } from '~/components/Container';
 import { SeriesItem } from '~/components/SeriesItem';
+import SeriesItemSkeleton from '~/components/SeriesItemSkeleton';
 import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
 
@@ -33,7 +34,20 @@ export default function SeriesPage() {
   const total = data?.pages[0] ? (data.pages[0] as GetLibrarySeries200).total : 0;
 
   if (isLoading) {
-    return <Text>Loading</Text>;
+    return (
+      <Container>
+        <LegendList
+          data={Array(10).fill({})}
+          renderItem={() => <SeriesItemSkeleton />}
+          keyExtractor={(_item, index) => `skeleton-series-${index}`}
+          numColumns={1}
+          recycleItems
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 4 }}
+          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
+          estimatedItemSize={145}
+        />
+      </Container>
+    );
   }
 
   if (!seriesItems.length) {
