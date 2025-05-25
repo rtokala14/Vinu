@@ -1,6 +1,6 @@
 import { LegendList } from '@legendapp/list';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 
 import { customAxios } from '~/api/custom-axios';
 import { GetLibrarySeries200 } from '~/api/models';
@@ -33,26 +33,7 @@ export default function SeriesPage() {
     : [];
   const total = data?.pages[0] ? (data.pages[0] as GetLibrarySeries200).total : 0;
 
-  if (isLoading) {
-    return (
-      <Container>
-        <FlatList
-          data={Array(10).fill({})}
-          renderItem={() => <SeriesItemSkeleton />}
-          keyExtractor={(_item, index) => `skeleton-series-${index}`}
-          numColumns={1}
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            padding: 4,
-            width: 'auto',
-          }}
-        />
-      </Container>
-    );
-  }
-
-  if (!seriesItems.length) {
+  if (!isLoading && !seriesItems.length) {
     return <Text>No series found</Text>;
   }
 
@@ -61,20 +42,26 @@ export default function SeriesPage() {
       {/* <View style={{ alignItems: 'center', marginVertical: 8 }}>
         <Text>{total}</Text>
       </View> */}
-      <LegendList
-        data={seriesItems}
-        renderItem={({ item }: { item: any }) => <SeriesItem item={item} />}
-        numColumns={2}
-        recycleItems
-        keyExtractor={(item: any) => item.id!}
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 4 }}
-        columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-        estimatedItemSize={180}
-        onEndReachedThreshold={2}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-        }}
-      />
+      {isLoading ? (
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <ActivityIndicator color="#B45309" size="large" />
+        </View>
+      ) : (
+        <LegendList
+          data={seriesItems}
+          renderItem={({ item }: { item: any }) => <SeriesItem item={item} />}
+          numColumns={2}
+          recycleItems
+          keyExtractor={(item: any) => item.id!}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 4 }}
+          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
+          estimatedItemSize={180}
+          onEndReachedThreshold={2}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+        />
+      )}
     </Container>
   );
 }

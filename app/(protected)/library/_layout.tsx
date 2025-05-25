@@ -41,7 +41,7 @@ export default function LibraryLayout() {
           backgroundColor: colors.primary,
         },
         tabBarScrollEnabled: true,
-        tabBarItemStyle: { width: 'auto', minWidth: 100 },
+        tabBarItemStyle: { width: 'auto', minWidth: 85 },
         tabBarStyle: {
           backgroundColor: colors.card,
           shadowRadius: 10,
@@ -49,18 +49,6 @@ export default function LibraryLayout() {
           paddingTop: insets.top - 10,
         },
       }}>
-      <MaterialTopTabs.Screen
-        name="collections"
-        options={{
-          title: 'Collections',
-        }}
-      />
-      <MaterialTopTabs.Screen
-        name="authors"
-        options={{
-          title: 'Authors',
-        }}
-      />
       <MaterialTopTabs.Screen
         name="books"
         options={{
@@ -77,6 +65,18 @@ export default function LibraryLayout() {
         name="playlists"
         options={{
           title: 'Playlists',
+        }}
+      />
+      <MaterialTopTabs.Screen
+        name="authors"
+        options={{
+          title: 'Authors',
+        }}
+      />
+      <MaterialTopTabs.Screen
+        name="collections"
+        options={{
+          title: 'Collections',
         }}
       />
     </MaterialTopTabs>

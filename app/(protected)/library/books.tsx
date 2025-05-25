@@ -49,18 +49,9 @@ export default function AllPage() {
   return (
     <Container>
       {isLoading ? (
-        <FlatList
-          data={Array(10).fill({})}
-          renderItem={() => <LibraryItemSkeleton />}
-          keyExtractor={(_item, index) => `skeleton-series-${index}`}
-          numColumns={1}
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            padding: 4,
-            width: 'auto',
-          }}
-        />
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <ActivityIndicator color="#B45309" size="large" />
+        </View>
       ) : (
         <LegendList
           data={libraryItems}
@@ -70,7 +61,7 @@ export default function AllPage() {
           keyExtractor={(item) => item.id!}
           contentContainerStyle={{ padding: 4 }}
           columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-          estimatedItemSize={180}
+          estimatedItemSize={160}
           onEndReachedThreshold={2}
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) fetchNextPage();

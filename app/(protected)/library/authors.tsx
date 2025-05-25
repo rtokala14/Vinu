@@ -1,6 +1,6 @@
 import { LegendList } from '@legendapp/list';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { FlatList } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 
 import { customAxios } from '~/api/custom-axios';
 import { GetLibraryAuthors200 } from '~/api/models';
@@ -35,42 +35,33 @@ export default function AuthorsPage() {
   // @ts-expect-error Yet to change the data type in the API
   const total = data?.pages[0] ? (data.pages[0] as GetLibraryAuthors200).total : 0;
 
-  if (isLoading) {
-    return (
-      <Container>
-        <FlatList
-          data={Array(20).fill({})}
-          renderItem={() => <AuthorItemSkeleton />}
-          keyExtractor={(_item, index) => `skeleton-author-${index}`}
-          numColumns={2}
-          contentContainerStyle={{ padding: 4 }}
-          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-        />
-      </Container>
-    );
-  }
-
-  if (!authors.length) {
+  if (!isLoading && !authors.length) {
     return <Text>No authors found</Text>;
   }
 
   return (
     <Container>
-      <Text>{total}</Text>
-      <LegendList
-        data={authors}
-        renderItem={({ item }) => <AuthorItem item={item} />}
-        numColumns={2}
-        recycleItems
-        keyExtractor={(item) => item.id!}
-        contentContainerStyle={{ padding: 4 }}
-        columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-        estimatedItemSize={230}
-        onEndReachedThreshold={2}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-        }}
-      />
+      {/* <Text>{total}</Text> */}
+      {isLoading ? (
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <ActivityIndicator color="#B45309" size="large" />
+        </View>
+      ) : (
+        <LegendList
+          data={authors}
+          renderItem={({ item }) => <AuthorItem item={item} />}
+          numColumns={2}
+          recycleItems
+          keyExtractor={(item) => item.id!}
+          contentContainerStyle={{ padding: 4 }}
+          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
+          estimatedItemSize={230}
+          onEndReachedThreshold={2}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+        />
+      )}
     </Container>
   );
 }
