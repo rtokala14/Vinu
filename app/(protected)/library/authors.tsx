@@ -1,5 +1,6 @@
 import { LegendList } from '@legendapp/list';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { FlatList } from 'react-native';
 
 import { customAxios } from '~/api/custom-axios';
 import { GetLibraryAuthors200 } from '~/api/models';
@@ -37,16 +38,13 @@ export default function AuthorsPage() {
   if (isLoading) {
     return (
       <Container>
-        {/* <Text>{total}</Text>  TODO: Decide if total should be shown during loading */}
-        <LegendList
+        <FlatList
           data={Array(20).fill({})}
           renderItem={() => <AuthorItemSkeleton />}
           keyExtractor={(_item, index) => `skeleton-author-${index}`}
           numColumns={2}
-          recycleItems
           contentContainerStyle={{ padding: 4 }}
           columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-          estimatedItemSize={230}
         />
       </Container>
     );

@@ -5,6 +5,7 @@ import type {
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useTheme, type ParamListBase, type TabNavigationState } from '@react-navigation/native';
 import { withLayoutContext } from 'expo-router';
+import { Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { Navigator } = createMaterialTopTabNavigator();
@@ -21,7 +22,12 @@ export default function LibraryLayout() {
   const insets = useSafeAreaInsets();
   return (
     <MaterialTopTabs
-      initialRouteName="all"
+      initialRouteName="books"
+      initialLayout={{
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height,
+      }}
+      backBehavior="history"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: 'grey',
@@ -30,6 +36,7 @@ export default function LibraryLayout() {
           textTransform: 'capitalize',
           fontWeight: 'bold',
         },
+        lazy: true,
         tabBarIndicatorStyle: {
           backgroundColor: colors.primary,
         },
@@ -55,9 +62,9 @@ export default function LibraryLayout() {
         }}
       />
       <MaterialTopTabs.Screen
-        name="all"
+        name="books"
         options={{
-          title: 'All',
+          title: 'Books',
         }}
       />
       <MaterialTopTabs.Screen

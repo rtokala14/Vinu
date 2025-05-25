@@ -15,19 +15,17 @@ interface SeriesItemProps {
 export function SeriesItem({ item }: SeriesItemProps) {
   const { colors } = useTheme();
 
-  const numBooks = item.books?.length || 0;
-  const covers = (item.books || []).slice(0, 7);
-  const baseWidth = 96;
-  const gap = numBooks > 3 ? -(baseWidth / 1.5 / (7 - 3)) * (covers.length - 3) : -16;
+  const covers = (item.books || []).slice(0, 6);
 
   return (
     <View className="flex flex-col items-center justify-center gap-2">
       <View
         style={{
-          marginBottom: 4,
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
           position: 'relative',
+          height: 180,
         }}>
         {covers.map((book, idx) => (
           <Image
@@ -37,14 +35,15 @@ export function SeriesItem({ item }: SeriesItemProps) {
               headers: { Authorization: `Bearer ${store$.userToken.peek()}` },
             }}
             style={{
-              width: baseWidth,
-              height: 144,
+              width: 106,
+              height: 160,
               borderRadius: 6,
-              marginLeft: idx === 0 ? 0 : gap,
+              marginLeft: idx === 0 ? 0 : -100,
+              marginBottom: idx * 5,
               borderWidth: 1,
               borderColor: colors.border,
               backgroundColor: colors.card,
-              zIndex: -idx,
+              zIndex: covers.length - idx,
             }}
             contentFit="cover"
             recyclingKey={book.id}
@@ -52,11 +51,14 @@ export function SeriesItem({ item }: SeriesItemProps) {
             transition={500}
           />
         ))}
-        <Badge className={` absolute left-2 top-2 z-50`}>
+        <Badge className={` absolute bottom-2 left-2 z-50`}>
           <Text>{item.books?.length}</Text>
         </Badge>
       </View>
-      <Text className="mb-1 text-center text-base font-semibold">{item.name}</Text>
+      <Text className="text-center text-base font-semibold">{item.name}</Text>
+      <Text className="-mt-2 mb-1 text-sm font-light">
+        {item.books![0].media?.metadata?.authorName}
+      </Text>
     </View>
   );
 }

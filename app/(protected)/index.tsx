@@ -5,7 +5,7 @@ import { store$ } from '~/stores';
 
 export default function HomePage() {
   const { data: libraryData, isLoading } = useGetLibraryById(
-    store$.userDefaultLibraryId.peek() as string
+    store$.currentLibraryId.peek() as string
   );
 
   return (

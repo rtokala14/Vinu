@@ -1,7 +1,7 @@
 import { LegendList } from '@legendapp/list';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 
 import { customAxios } from '~/api/custom-axios';
 import { GetLibraryItems200 } from '~/api/models';
@@ -42,43 +42,41 @@ export default function AllPage() {
     : [];
   const total = data?.pages[0] ? (data.pages[0] as GetLibraryItems200).total : 0;
 
-  if (isLoading) {
-    return (
-      <Container>
-        <LegendList
-          data={Array(20).fill({})}
-          renderItem={() => <LibraryItemSkeleton />}
-          keyExtractor={(_item, index) => `skeleton-${index}`}
-          numColumns={2}
-          recycleItems
-          contentContainerStyle={{ padding: 4 }}
-          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-          estimatedItemSize={180}
-        />
-      </Container>
-    );
-  }
-
-  if (!libraryItems.length) {
+  if (!isLoading && !libraryItems.length) {
     return <Text>No items found</Text>;
   }
 
   return (
     <Container>
-      <LegendList
-        data={libraryItems}
-        renderItem={({ item }) => <LibraryItem item={item} />}
-        numColumns={2}
-        recycleItems
-        keyExtractor={(item) => item.id!}
-        contentContainerStyle={{ padding: 4 }}
-        columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
-        estimatedItemSize={180}
-        onEndReachedThreshold={2}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-        }}
-      />
+      {isLoading ? (
+        <FlatList
+          data={Array(10).fill({})}
+          renderItem={() => <LibraryItemSkeleton />}
+          keyExtractor={(_item, index) => `skeleton-series-${index}`}
+          numColumns={1}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            padding: 4,
+            width: 'auto',
+          }}
+        />
+      ) : (
+        <LegendList
+          data={libraryItems}
+          renderItem={({ item }) => <LibraryItem item={item} />}
+          numColumns={2}
+          recycleItems
+          keyExtractor={(item) => item.id!}
+          contentContainerStyle={{ padding: 4 }}
+          columnWrapperStyle={{ columnGap: 8, rowGap: 8 }}
+          estimatedItemSize={180}
+          onEndReachedThreshold={2}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+        />
+      )}
       <View className="-my-3 flex flex-row items-center justify-center gap-2">
         <Button
           onPress={() =>
@@ -86,6 +84,7 @@ export default function AllPage() {
           }>
           <Text>{params.desc === 0 ? 'Asc' : 'Desc'}</Text>
         </Button>
+        <Text>{total}</Text>
       </View>
     </Container>
   );

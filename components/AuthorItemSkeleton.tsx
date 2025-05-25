@@ -1,5 +1,4 @@
-import React from "react";
-import { View } from "react-native";
+import { View } from 'react-native';
 
 const AuthorItemSkeleton = () => {
   return (
@@ -9,18 +8,17 @@ const AuthorItemSkeleton = () => {
           // The `style` prop is used here for consistency with AuthorItem.tsx
           // although these could be converted to Tailwind classes if preferred.
           marginBottom: 4,
-          flexDirection: "row",
-          alignItems: "center",
-          position: "relative",
-        }}
-      >
+          flexDirection: 'row',
+          alignItems: 'center',
+          position: 'relative',
+        }}>
         {/* Image Placeholder */}
-        <View className="w-[150px] h-[225px] rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
+        <View className="h-[225px] w-[150px] animate-pulse rounded-lg bg-gray-300 dark:bg-gray-700" />
         {/* Badge Placeholder */}
-        <View className="absolute left-2 top-2 z-50 w-10 h-5 bg-gray-400 dark:bg-gray-600 animate-pulse rounded" />
+        <View className="absolute left-2 top-2 z-50 h-5 w-10 animate-pulse rounded bg-gray-400 dark:bg-gray-600" />
       </View>
       {/* Text Placeholder */}
-      <View className="w-24 h-4 bg-gray-300 dark:bg-gray-700 animate-pulse rounded" />
+      <View className="h-4 w-24 animate-pulse rounded bg-gray-300 dark:bg-gray-700" />
     </View>
   );
 };
