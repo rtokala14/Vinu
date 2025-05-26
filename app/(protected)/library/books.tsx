@@ -7,13 +7,13 @@ import { customAxios } from '~/api/custom-axios';
 import { GetLibraryItems200 } from '~/api/models';
 import { Container } from '~/components/Container';
 import { LibraryItem } from '~/components/library/LibraryItem';
-import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
 
 export default function AllPage() {
   const userLibraryId = store$.currentLibraryId.get();
-  const [params, setParams] = useState({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [params, _] = useState({
     sort: 'media.metadata.title',
     desc: 0,
     filter: '',
@@ -39,17 +39,17 @@ export default function AllPage() {
   const libraryItems = data
     ? data.pages.flatMap((page) => (page as GetLibraryItems200).results || [])
     : [];
-  const total = data?.pages[0] ? (data.pages[0] as GetLibraryItems200).total : 0;
-
-  if (!isLoading && !libraryItems.length) {
-    return <Text>No items found</Text>;
-  }
+  // const total = data?.pages[0] ? (data.pages[0] as GetLibraryItems200).total : 0;
 
   return (
     <Container>
       {isLoading ? (
         <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
           <ActivityIndicator color="#B45309" size="large" />
+        </View>
+      ) : !libraryItems.length ? (
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <Text>No items found</Text>
         </View>
       ) : (
         <LegendList
@@ -67,15 +67,6 @@ export default function AllPage() {
           }}
         />
       )}
-      <View className="-my-3 flex flex-row items-center justify-center gap-2">
-        <Button
-          onPress={() =>
-            setParams((oldParams) => ({ ...oldParams, desc: oldParams.desc === 0 ? 1 : 0 }))
-          }>
-          <Text>{params.desc === 0 ? 'Asc' : 'Desc'}</Text>
-        </Button>
-        <Text>{total}</Text>
-      </View>
     </Container>
   );
 }

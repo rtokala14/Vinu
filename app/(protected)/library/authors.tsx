@@ -32,15 +32,15 @@ export default function AuthorsPage() {
       data.pages.flatMap((page) => (page as GetLibraryAuthors200).results || [])
     : [];
 
-  if (!isLoading && !authors.length) {
-    return <Text>No authors found</Text>;
-  }
-
   return (
     <Container>
       {isLoading ? (
         <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
           <ActivityIndicator color="#B45309" size="large" />
+        </View>
+      ) : !authors.length ? (
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <Text>No authors found</Text>
         </View>
       ) : (
         <LegendList

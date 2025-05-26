@@ -68,14 +68,15 @@ export default function PlaylistsPage() {
     ? data.pages.flatMap((page) => (page as GetLibraryPlaylists200).results || [])
     : [];
 
-  if (!isLoading && !playlists.length) {
-    return <Text>No playlists found</Text>;
-  }
   return (
     <Container>
       {isLoading ? (
         <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
           <ActivityIndicator color="#B45309" size="large" />
+        </View>
+      ) : !playlists.length ? (
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <Text>No playlists found</Text>
         </View>
       ) : (
         <LegendList

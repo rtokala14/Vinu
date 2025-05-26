@@ -54,14 +54,15 @@ export default function CollectionsPage() {
     ? data.pages.flatMap((page) => (page as GetLibraryCollections200).results || [])
     : [];
 
-  if (!isLoading && !collections.length) {
-    return <Text>No collections found</Text>;
-  }
   return (
     <Container>
       {isLoading ? (
         <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
           <ActivityIndicator color="#B45309" size="large" />
+        </View>
+      ) : !collections.length ? (
+        <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
+          <Text>No collections found</Text>
         </View>
       ) : (
         <LegendList
