@@ -26,7 +26,9 @@ export function LibraryItem({ item }: { item: LibraryItemBase }) {
         placeholderContentFit="cover"
         transition={1000}
       />
-      <Text className="text-center text-base font-semibold">{item.media?.metadata?.title}</Text>
+      <Text className="line-clamp-2 w-36 text-wrap text-center text-base font-semibold">
+        {item.media?.metadata?.title}
+      </Text>
       <Text className="-mt-2 mb-1 text-sm font-light">{item.media?.metadata?.authorName}</Text>
     </View>
   );

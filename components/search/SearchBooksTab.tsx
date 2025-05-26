@@ -15,7 +15,7 @@ export function SearchBooksTab({ searchResults }: SearchBooksTabProps) {
   if (!books.length) {
     return (
       <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-        <Text>No books found</Text>
+        <Text>Type to search books...</Text>
       </View>
     );
   }

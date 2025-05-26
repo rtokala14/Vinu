@@ -15,7 +15,7 @@ export function SearchSeriesTab({ searchResults }: SearchSeriesTabProps) {
   if (!series.length) {
     return (
       <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-        <Text>No series found</Text>
+        <Text>Type to search series...</Text>
       </View>
     );
   }

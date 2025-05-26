@@ -22,6 +22,7 @@ export function SearchTabBar({ activeTab, onTabPress, barStyle }: SearchTabBarPr
       {tabs.map((tab, index) => (
         <Pressable
           key={tab}
+          hitSlop={30}
           onPress={() => onTabPress(index)}
           style={{ width: width / tabs.length, alignItems: 'center', justifyContent: 'center' }}>
           <Text

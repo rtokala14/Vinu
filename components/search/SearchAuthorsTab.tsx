@@ -15,7 +15,7 @@ export function SearchAuthorsTab({ searchResults }: SearchAuthorsTabProps) {
   if (!authors.length) {
     return (
       <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-        <Text>No authors found</Text>
+        <Text>Type to search authors...</Text>
       </View>
     );
   }
