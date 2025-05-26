@@ -2,7 +2,7 @@ import { useTheme } from '@react-navigation/native';
 import { View, FlatList, Keyboard } from 'react-native';
 
 import type { SearchLibrary200 } from '~/api/models';
-import { AuthorItem } from '~/components/AuthorItem';
+import { AuthorItem } from '~/components/library/AuthorItem';
 import { Text } from '~/components/ui/text';
 
 interface SearchAuthorsTabProps {

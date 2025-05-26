@@ -2,9 +2,9 @@ import { useTheme } from '@react-navigation/native';
 import { View, Pressable, FlatList, Keyboard } from 'react-native';
 
 import type { SearchLibrary200 } from '~/api/models';
-import { AuthorItem } from '~/components/AuthorItem';
-import { LibraryItem } from '~/components/LibraryItem';
-import { SeriesItem } from '~/components/SeriesItem';
+import { AuthorItem } from '~/components/library/AuthorItem';
+import { LibraryItem } from '~/components/library/LibraryItem';
+import { SeriesItem } from '~/components/library/SeriesItem';
 import { Text } from '~/components/ui/text';
 
 interface Section {

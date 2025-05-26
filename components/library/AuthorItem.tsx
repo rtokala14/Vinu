@@ -2,8 +2,8 @@ import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
-import { Badge } from './ui/badge';
-import { Text } from './ui/text';
+import { Badge } from '../ui/badge';
+import { Text } from '../ui/text';
 
 import { AuthorMinified } from '~/api/models';
 import { store$ } from '~/stores';

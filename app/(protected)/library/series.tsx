@@ -1,12 +1,11 @@
 import { LegendList } from '@legendapp/list';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 import { customAxios } from '~/api/custom-axios';
 import { GetLibrarySeries200 } from '~/api/models';
 import { Container } from '~/components/Container';
-import { SeriesItem } from '~/components/SeriesItem';
-import SeriesItemSkeleton from '~/components/SeriesItemSkeleton';
+import { SeriesItem } from '~/components/library/SeriesItem';
 import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
 

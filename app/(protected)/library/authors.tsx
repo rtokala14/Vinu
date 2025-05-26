@@ -4,8 +4,8 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { customAxios } from '~/api/custom-axios';
 import { GetLibraryAuthors200 } from '~/api/models';
-import { AuthorItem } from '~/components/AuthorItem';
 import { Container } from '~/components/Container';
+import { AuthorItem } from '~/components/library/AuthorItem';
 import { Text } from '~/components/ui/text';
 import { store$ } from '~/stores';
 

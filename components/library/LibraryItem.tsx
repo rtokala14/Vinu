@@ -2,7 +2,7 @@ import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
-import { Text } from './ui/text';
+import { Text } from '../ui/text';
 
 import { LibraryItemBase } from '~/api/models';
 import { store$ } from '~/stores';
