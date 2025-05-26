@@ -10,6 +10,7 @@ import axios from 'axios';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useLayoutEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 import { NAV_THEME } from '~/lib/constants';
@@ -93,22 +94,24 @@ export default function Layout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-        <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-        <Stack
-          screenOptions={{
-            animationDuration: 50,
-            headerShown: false,
-          }}>
-          <Stack.Protected guard={isAuthorized}>
-            <Stack.Screen name="(protected)" options={{ animation: 'slide_from_right' }} />
-          </Stack.Protected>
-          <Stack.Protected guard={!isAuthorized}>
-            <Stack.Screen name="auth" options={{ animation: 'slide_from_left' }} />
-          </Stack.Protected>
-        </Stack>
-        <PortalHost />
-      </ThemeProvider>
+      <GestureHandlerRootView>
+        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+          <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
+          <Stack
+            screenOptions={{
+              animationDuration: 50,
+              headerShown: false,
+            }}>
+            <Stack.Protected guard={isAuthorized}>
+              <Stack.Screen name="(protected)" options={{ animation: 'slide_from_right' }} />
+            </Stack.Protected>
+            <Stack.Protected guard={!isAuthorized}>
+              <Stack.Screen name="auth" options={{ animation: 'slide_from_left' }} />
+            </Stack.Protected>
+          </Stack>
+          <PortalHost />
+        </ThemeProvider>
+      </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }
