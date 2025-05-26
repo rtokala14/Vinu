@@ -55,8 +55,10 @@ export function SeriesItem({ item }: SeriesItemProps) {
           <Text>{item.books?.length}</Text>
         </Badge>
       </View>
-      {/* @ts-ignore */}
-      <Text className="text-center text-base font-semibold">{item.name ?? item.series.name}</Text>
+      <Text className="line-clamp-2 w-24 text-wrap text-center text-base font-semibold">
+        {/* @ts-expect-error */}
+        {item.name ?? item.series.name}
+      </Text>
       <Text className="-mt-2 mb-1 text-sm font-light">
         {item.books![0].media?.metadata?.authorName}
       </Text>

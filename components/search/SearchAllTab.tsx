@@ -1,5 +1,5 @@
 import { useTheme } from '@react-navigation/native';
-import { View, Pressable, FlatList, Keyboard } from 'react-native';
+import { View, Pressable, FlatList, Keyboard, ActivityIndicator } from 'react-native';
 
 import type { SearchLibrary200 } from '~/api/models';
 import { AuthorItem } from '~/components/library/AuthorItem';
@@ -42,7 +42,7 @@ export function SearchAllTab({
   if (isLoading || isFetching) {
     return (
       <View className="m-2 flex flex-1 items-center justify-center rounded-lg bg-card">
-        <Text>Loading...</Text>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
