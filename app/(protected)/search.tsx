@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   View,
   FlatList,
-  SectionList,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -102,10 +102,16 @@ export default function SearchPage() {
     };
   });
 
+  // Helper to dismiss keyboard for Reanimated runOnJS
+  const dismissKeyboard = () => Keyboard.dismiss();
+
   // Pan gesture: only respond to horizontal swipes, ignore vertical scrolls
   const panGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
     .failOffsetY([-20, 20])
+    .onBegin(() => {
+      runOnJS(dismissKeyboard)();
+    })
     .onChange((event) => {
       const newTranslateX = translateX.value + event.changeX;
       const minTranslateX = -width * (tabs.length - 1);
@@ -142,31 +148,6 @@ export default function SearchPage() {
       );
     });
 
-  // Helper for SectionList data in 'All' tab
-  const allSections = [
-    searchResults.book?.length
-      ? {
-          title: 'Books',
-          data: searchResults.book.map((b) => b.libraryItem).filter((item) => !!item),
-          type: 'book',
-        }
-      : null,
-    searchResults.series?.length
-      ? {
-          title: 'Series',
-          data: searchResults.series.filter((item) => !!item),
-          type: 'series',
-        }
-      : null,
-    searchResults.authors?.length
-      ? {
-          title: 'Authors',
-          data: searchResults.authors.filter((item) => !!item),
-          type: 'author',
-        }
-      : null,
-  ].filter(Boolean);
-
   const renderTabContent = (tab: string) => {
     if (!debouncedSearch) {
       return (
@@ -202,68 +183,122 @@ export default function SearchPage() {
       );
     }
     if (tab === 'All') {
+      const books =
+        searchResults.book?.map((b: any) => b.libraryItem).filter((item: any) => !!item) || [];
+      const series = searchResults.series?.filter((item: any) => !!item) || [];
+      const authors = searchResults.authors?.filter((item: any) => !!item) || [];
+      // Prepare sections array for FlatList
+      type Section = {
+        key: string;
+        data: any[];
+        renderItem: (item: any) => React.ReactElement | null;
+        tabIndex: number;
+      };
+      const sections: Section[] = [
+        books.length > 0
+          ? {
+              key: 'Books',
+              data: books,
+              renderItem: (item: any) => (item ? <LibraryItem item={item} /> : null),
+              tabIndex: 1,
+            }
+          : null,
+        series.length > 0
+          ? {
+              key: 'Series',
+              data: series,
+              renderItem: (item: any) => (item ? <SeriesItem item={item} /> : null),
+              tabIndex: 2,
+            }
+          : null,
+        authors.length > 0
+          ? {
+              key: 'Authors',
+              data: authors,
+              renderItem: (item: any) => (item ? <AuthorItem item={item} /> : null),
+              tabIndex: 3,
+            }
+          : null,
+      ].filter((s): s is Section => !!s);
+
       return (
-        <SectionList
-          sections={allSections as any}
-          keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
-          renderSectionHeader={({ section: { title } }) => (
-            <Text className="mb-2 mt-4 text-lg font-bold" style={{ paddingLeft: 8 }}>
-              {title}
-            </Text>
-          )}
-          renderItem={({ item, section }) => {
-            if (section.type === 'book') return item ? <LibraryItem item={item} /> : null;
-            if (section.type === 'series') return item ? <SeriesItem item={item} /> : null;
-            if (section.type === 'author') return item ? <AuthorItem item={item} /> : null;
-            return null;
-          }}
-          contentContainerStyle={{
-            gap: 8,
-            backgroundColor: colors.card,
-            borderRadius: 8,
-            paddingBottom: 16,
-            margin: 8,
-            paddingHorizontal: 4,
-          }}
-          stickySectionHeadersEnabled={false}
-          showsVerticalScrollIndicator={false}
-        />
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.card,
+              borderRadius: 8,
+              margin: 8,
+              paddingBottom: 8,
+              overflow: 'hidden',
+            }}>
+            <FlatList
+              data={sections}
+              keyExtractor={(section) => section.key}
+              renderItem={({ item: section }) => (
+                <View style={{ marginTop: 12 }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: 8,
+                      paddingTop: 8,
+                      paddingBottom: 2,
+                    }}>
+                    <Text className="text-lg font-bold">{section.key}</Text>
+                    <Pressable
+                      onPress={() => handleTabPress(section.tabIndex)}
+                      style={{ paddingHorizontal: 8, paddingVertical: 2 }}>
+                      <Text className="font-medium text-primary">More</Text>
+                    </Pressable>
+                  </View>
+                  <FlatList
+                    data={section.data.slice(0, 2)}
+                    keyExtractor={(item: any, index: number) =>
+                      item?.id ? String(item.id) : String(index)
+                    }
+                    renderItem={({ item }: { item: any }) => section.renderItem(item) ?? null}
+                    numColumns={2}
+                    columnWrapperStyle={{
+                      paddingHorizontal: 4,
+                      justifyContent: 'space-evenly',
+                      paddingTop: 8,
+                    }}
+                    contentContainerStyle={{
+                      gap: 8,
+                      borderRadius: 8,
+                      paddingBottom: 8,
+                    }}
+                    showsVerticalScrollIndicator={false}
+                    scrollEnabled={false}
+                    onScrollBeginDrag={() => Keyboard.dismiss()}
+                  />
+                </View>
+              )}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 16 }}
+              onScrollBeginDrag={() => Keyboard.dismiss()}
+            />
+          </View>
+        </View>
       );
     }
     if (tab === 'Books') {
       return searchResults.book?.length ? (
-        <FlatList
-          data={searchResults.book.map((b) => b.libraryItem).filter((item) => !!item)}
-          keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
-          renderItem={({ item }) => (item ? <LibraryItem item={item} /> : null)}
-          numColumns={2}
-          columnWrapperStyle={{
-            paddingHorizontal: 4,
-            justifyContent: 'space-evenly',
-            paddingTop: 8,
-          }}
-          contentContainerStyle={{
-            gap: 8,
+        <View
+          style={{
+            flex: 1,
             backgroundColor: colors.card,
             borderRadius: 8,
-            paddingBottom: 16,
             margin: 8,
-          }}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text>No books found</Text>
-        </View>
-      );
-    }
-    if (tab === 'Series') {
-      return searchResults.series?.length ? (
-        <View style={{ flex: 1 }}>
+            paddingBottom: 8,
+            overflow: 'hidden',
+          }}>
           <FlatList
-            data={searchResults.series.filter((item) => !!item)}
+            data={searchResults.book.map((b) => b.libraryItem).filter((item) => !!item)}
             keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
-            renderItem={({ item }) => (item ? <SeriesItem item={item} /> : null)}
+            renderItem={({ item }) => (item ? <LibraryItem item={item} /> : null)}
             numColumns={2}
             columnWrapperStyle={{
               paddingHorizontal: 4,
@@ -272,13 +307,47 @@ export default function SearchPage() {
             }}
             contentContainerStyle={{
               gap: 8,
-              backgroundColor: colors.card,
               borderRadius: 8,
               paddingBottom: 16,
-              margin: 8,
-              flexGrow: 1,
             }}
             showsVerticalScrollIndicator={false}
+            onScrollBeginDrag={() => Keyboard.dismiss()}
+          />
+        </View>
+      ) : (
+        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
+          <Text>No books found</Text>
+        </View>
+      );
+    }
+    if (tab === 'Series') {
+      return searchResults.series?.length ? (
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.card,
+            borderRadius: 8,
+            margin: 8,
+            paddingBottom: 8,
+            overflow: 'hidden',
+          }}>
+          <FlatList
+            data={searchResults.series.filter((item) => !!item)}
+            keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
+            renderItem={({ item }) => (item ? <SeriesItem item={item} /> : null)}
+            numColumns={2}
+            columnWrapperStyle={{
+              paddingHorizontal: 4,
+              justifyContent: 'space-evenly',
+              paddingTop: 16,
+            }}
+            contentContainerStyle={{
+              gap: 8,
+              borderRadius: 8,
+              paddingBottom: 16,
+            }}
+            showsVerticalScrollIndicator={false}
+            onScrollBeginDrag={() => Keyboard.dismiss()}
           />
         </View>
       ) : (
@@ -289,7 +358,15 @@ export default function SearchPage() {
     }
     if (tab === 'Authors') {
       return searchResults.authors?.length ? (
-        <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.card,
+            borderRadius: 8,
+            margin: 8,
+            paddingBottom: 8,
+            overflow: 'hidden',
+          }}>
           <FlatList
             data={searchResults.authors.filter((item) => !!item)}
             keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
@@ -302,13 +379,11 @@ export default function SearchPage() {
             }}
             contentContainerStyle={{
               gap: 8,
-              backgroundColor: colors.card,
               borderRadius: 8,
               paddingBottom: 16,
-              flexGrow: 1,
-              margin: 8,
             }}
             showsVerticalScrollIndicator={false}
+            onScrollBeginDrag={() => Keyboard.dismiss()}
           />
         </View>
       ) : (
