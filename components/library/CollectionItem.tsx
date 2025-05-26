@@ -5,17 +5,17 @@ import { View } from 'react-native';
 import { Badge } from '../ui/badge';
 import { Text } from '../ui/text';
 
-import { PlaylistExpanded } from '~/app/(protected)/library/playlists';
+import { CollectionExpanded } from '~/app/(protected)/library/collections';
 import { store$ } from '~/stores';
 
-interface PlaylistItemProps {
-  item: PlaylistExpanded;
+interface CollectionItemProps {
+  item: CollectionExpanded;
 }
 
-export function PlaylistItemComponent({ item }: PlaylistItemProps) {
+export function CollectionItemComponent({ item }: CollectionItemProps) {
   const { colors } = useTheme();
 
-  const covers = (item.items || []).slice(0, 6);
+  const covers = (item.books || []).slice(0, 6);
 
   return (
     <View className="flex flex-col items-center justify-center gap-2">
@@ -29,9 +29,9 @@ export function PlaylistItemComponent({ item }: PlaylistItemProps) {
         }}>
         {covers.map((book, idx) => (
           <Image
-            key={book.libraryItemId}
+            key={book.id}
             source={{
-              uri: `${store$.settings.serverUrl.peek()}/api/items/${book.libraryItemId}/cover?format=webp`,
+              uri: `${store$.settings.serverUrl.peek()}/api/items/${book.media?.id}/cover?format=webp`,
               headers: { Authorization: `Bearer ${store$.userToken.peek()}` },
             }}
             style={{
@@ -45,13 +45,13 @@ export function PlaylistItemComponent({ item }: PlaylistItemProps) {
               zIndex: covers.length - idx,
             }}
             contentFit="cover"
-            recyclingKey={book.libraryItemId}
+            recyclingKey={book.id}
             placeholderContentFit="cover"
             transition={500}
           />
         ))}
         <Badge className={` absolute bottom-2 left-2 z-50`}>
-          <Text>{item.items?.length}</Text>
+          <Text>{item.books?.length}</Text>
         </Badge>
       </View>
       {/* @ts-ignore */}

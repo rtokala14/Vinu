@@ -31,8 +31,6 @@ export default function AuthorsPage() {
     ? // @ts-expect-error Yet to change the data type in the API
       data.pages.flatMap((page) => (page as GetLibraryAuthors200).results || [])
     : [];
-  // @ts-expect-error Yet to change the data type in the API
-  const total = data?.pages[0] ? (data.pages[0] as GetLibraryAuthors200).total : 0;
 
   if (!isLoading && !authors.length) {
     return <Text>No authors found</Text>;
@@ -40,7 +38,6 @@ export default function AuthorsPage() {
 
   return (
     <Container>
-      {/* <Text>{total}</Text> */}
       {isLoading ? (
         <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
           <ActivityIndicator color="#B45309" size="large" />

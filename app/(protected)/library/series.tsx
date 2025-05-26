@@ -30,7 +30,6 @@ export default function SeriesPage() {
   const seriesItems = data
     ? data.pages.flatMap((page) => (page as GetLibrarySeries200).results || [])
     : [];
-  const total = data?.pages[0] ? (data.pages[0] as GetLibrarySeries200).total : 0;
 
   if (!isLoading && !seriesItems.length) {
     return <Text>No series found</Text>;
@@ -38,9 +37,6 @@ export default function SeriesPage() {
 
   return (
     <Container>
-      {/* <View style={{ alignItems: 'center', marginVertical: 8 }}>
-        <Text>{total}</Text>
-      </View> */}
       {isLoading ? (
         <View className=" flex flex-1 items-center justify-center rounded-lg bg-card">
           <ActivityIndicator color="#B45309" size="large" />
