@@ -1,16 +1,5 @@
-import { useTheme } from '@react-navigation/native';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  View,
-  FlatList,
-} from 'react-native';
+import { useState } from 'react';
+import { Dimensions, Keyboard, KeyboardAvoidingView, Platform, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -21,57 +10,23 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { customAxios } from '~/api/custom-axios';
-import { SearchLibrary200 } from '~/api/models';
-import { AuthorItem } from '~/components/AuthorItem';
-import { LibraryItem } from '~/components/LibraryItem';
-import { SeriesItem } from '~/components/SeriesItem';
-import { Input } from '~/components/ui/input';
-import { Text } from '~/components/ui/text';
-import { store$ } from '~/stores';
+import { SearchAllTab } from '../../components/search/SearchAllTab';
+import { SearchAuthorsTab } from '../../components/search/SearchAuthorsTab';
+import { SearchBooksTab } from '../../components/search/SearchBooksTab';
+import { SearchInput } from '../../components/search/SearchInput';
+import { SearchSeriesTab } from '../../components/search/SearchSeriesTab';
+import { SearchTabBar } from '../../components/search/SearchTabBar';
+import { useSearchQuery } from '../../components/search/useSearchQuery';
 
 const { width } = Dimensions.get('window');
 const tabs = ['All', 'Books', 'Series', 'Authors'];
 
 export default function SearchPage() {
   const [activeTab, setActiveTab] = useState(0);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const translateX = useSharedValue(0);
   const insets = useSafeAreaInsets();
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const userLibraryId = store$.currentLibraryId.peek();
-  const userToken = store$.userToken.peek();
-  const { colors } = useTheme();
-
-  // Debounce search input
-  useEffect(() => {
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 400);
-    return () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, [search]);
-
-  // Query for search results
-  const { data, isLoading, isError, isFetching } = useInfiniteQuery({
-    queryKey: ['search', userLibraryId, debouncedSearch],
-    enabled: !!debouncedSearch,
-    initialPageParam: 0,
-    queryFn: async () => {
-      if (!debouncedSearch) return {} as SearchLibrary200;
-      return customAxios({
-        url: `/api/libraries/${userLibraryId}/search?q=${encodeURIComponent(debouncedSearch)}`,
-        method: 'GET',
-        headers: { Authorization: `Bearer ${userToken}` },
-      }).then((res) => res as SearchLibrary200);
-    },
-    getNextPageParam: () => undefined, // No pagination for search
-  });
-
-  const searchResults: SearchLibrary200 = data?.pages?.[0] || {};
+  const { search, setSearch, debouncedSearch, isLoading, isError, isFetching, searchResults } =
+    useSearchQuery();
 
   const handleTabPress = (index: number) => {
     translateX.value = withTiming(
@@ -93,7 +48,6 @@ export default function SearchPage() {
   const barStyle = useAnimatedStyle(() => {
     const barItemWidth = width / tabs.length;
     const barTranslateX = (-translateX.value / width) * barItemWidth;
-
     return {
       width: barItemWidth,
       height: 2,
@@ -102,10 +56,8 @@ export default function SearchPage() {
     };
   });
 
-  // Helper to dismiss keyboard for Reanimated runOnJS
   const dismissKeyboard = () => Keyboard.dismiss();
 
-  // Pan gesture: only respond to horizontal swipes, ignore vertical scrolls
   const panGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
     .failOffsetY([-20, 20])
@@ -122,10 +74,8 @@ export default function SearchPage() {
       const currentContentOffset = -translateX.value;
       const currentTabIndex = Math.round(currentContentOffset / width);
       let newTab = currentTabIndex;
-
       const threshold = width / 4;
       const velocity = event.velocityX;
-
       if (Math.abs(event.translationX) > threshold || Math.abs(velocity) > 300) {
         if (event.translationX > 0 || velocity > 300) {
           newTab = Math.max(currentTabIndex - 1, 0);
@@ -135,7 +85,6 @@ export default function SearchPage() {
       } else {
         newTab = Math.round(-translateX.value / width);
       }
-
       translateX.value = withTiming(
         -newTab * width,
         {
@@ -149,287 +98,38 @@ export default function SearchPage() {
     });
 
   const renderTabContent = (tab: string) => {
-    if (!debouncedSearch) {
-      return (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text className="text-muted-foreground">Type to search your library...</Text>
-        </View>
-      );
-    }
-    if (isLoading || isFetching) {
-      return (
-        <View className="m-2 flex flex-1 items-center justify-center rounded-lg bg-card">
-          <ActivityIndicator color="#B45309" size="large" />
-        </View>
-      );
-    }
-    if (isError) {
-      return (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text className="text-destructive">Error loading results</Text>
-        </View>
-      );
-    }
-    if (
-      !searchResults ||
-      (!searchResults.book?.length &&
-        !searchResults.series?.length &&
-        !searchResults.authors?.length)
-    ) {
-      return (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text>No results found</Text>
-        </View>
-      );
-    }
     if (tab === 'All') {
-      const books =
-        searchResults.book?.map((b: any) => b.libraryItem).filter((item: any) => !!item) || [];
-      const series = searchResults.series?.filter((item: any) => !!item) || [];
-      const authors = searchResults.authors?.filter((item: any) => !!item) || [];
-      // Prepare sections array for FlatList
-      type Section = {
-        key: string;
-        data: any[];
-        renderItem: (item: any) => React.ReactElement | null;
-        tabIndex: number;
-      };
-      const sections: Section[] = [
-        books.length > 0
-          ? {
-              key: 'Books',
-              data: books,
-              renderItem: (item: any) => (item ? <LibraryItem item={item} /> : null),
-              tabIndex: 1,
-            }
-          : null,
-        series.length > 0
-          ? {
-              key: 'Series',
-              data: series,
-              renderItem: (item: any) => (item ? <SeriesItem item={item} /> : null),
-              tabIndex: 2,
-            }
-          : null,
-        authors.length > 0
-          ? {
-              key: 'Authors',
-              data: authors,
-              renderItem: (item: any) => (item ? <AuthorItem item={item} /> : null),
-              tabIndex: 3,
-            }
-          : null,
-      ].filter((s): s is Section => !!s);
-
       return (
-        <View style={{ flex: 1 }}>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: colors.card,
-              borderRadius: 8,
-              margin: 8,
-              paddingBottom: 8,
-              overflow: 'hidden',
-            }}>
-            <FlatList
-              data={sections}
-              keyExtractor={(section) => section.key}
-              renderItem={({ item: section }) => (
-                <View style={{ marginTop: 12 }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingHorizontal: 8,
-                      paddingTop: 8,
-                      paddingBottom: 2,
-                    }}>
-                    <Text className="text-lg font-bold">{section.key}</Text>
-                    <Pressable
-                      onPress={() => handleTabPress(section.tabIndex)}
-                      style={{ paddingHorizontal: 8, paddingVertical: 2 }}>
-                      <Text className="font-medium text-primary">More</Text>
-                    </Pressable>
-                  </View>
-                  <FlatList
-                    data={section.data.slice(0, 2)}
-                    keyExtractor={(item: any, index: number) =>
-                      item?.id ? String(item.id) : String(index)
-                    }
-                    renderItem={({ item }: { item: any }) => section.renderItem(item) ?? null}
-                    numColumns={2}
-                    columnWrapperStyle={{
-                      paddingHorizontal: 4,
-                      justifyContent: 'space-evenly',
-                      paddingTop: 8,
-                    }}
-                    contentContainerStyle={{
-                      gap: 8,
-                      borderRadius: 8,
-                      paddingBottom: 8,
-                    }}
-                    showsVerticalScrollIndicator={false}
-                    scrollEnabled={false}
-                    onScrollBeginDrag={() => Keyboard.dismiss()}
-                  />
-                </View>
-              )}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 16 }}
-              onScrollBeginDrag={() => Keyboard.dismiss()}
-            />
-          </View>
-        </View>
+        <SearchAllTab
+          searchResults={searchResults}
+          handleTabPress={handleTabPress}
+          isLoading={isLoading}
+          isFetching={isFetching}
+          isError={isError}
+          debouncedSearch={debouncedSearch}
+        />
       );
     }
     if (tab === 'Books') {
-      return searchResults.book?.length ? (
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colors.card,
-            borderRadius: 8,
-            margin: 8,
-            paddingBottom: 8,
-            overflow: 'hidden',
-          }}>
-          <FlatList
-            data={searchResults.book.map((b) => b.libraryItem).filter((item) => !!item)}
-            keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
-            renderItem={({ item }) => (item ? <LibraryItem item={item} /> : null)}
-            numColumns={2}
-            columnWrapperStyle={{
-              paddingHorizontal: 4,
-              justifyContent: 'space-evenly',
-              paddingTop: 8,
-            }}
-            contentContainerStyle={{
-              gap: 8,
-              borderRadius: 8,
-              paddingBottom: 16,
-            }}
-            showsVerticalScrollIndicator={false}
-            onScrollBeginDrag={() => Keyboard.dismiss()}
-          />
-        </View>
-      ) : (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text>No books found</Text>
-        </View>
-      );
+      return <SearchBooksTab searchResults={searchResults} />;
     }
     if (tab === 'Series') {
-      return searchResults.series?.length ? (
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colors.card,
-            borderRadius: 8,
-            margin: 8,
-            paddingBottom: 8,
-            overflow: 'hidden',
-          }}>
-          <FlatList
-            data={searchResults.series.filter((item) => !!item)}
-            keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
-            renderItem={({ item }) => (item ? <SeriesItem item={item} /> : null)}
-            numColumns={2}
-            columnWrapperStyle={{
-              paddingHorizontal: 4,
-              justifyContent: 'space-evenly',
-              paddingTop: 16,
-            }}
-            contentContainerStyle={{
-              gap: 8,
-              borderRadius: 8,
-              paddingBottom: 16,
-            }}
-            showsVerticalScrollIndicator={false}
-            onScrollBeginDrag={() => Keyboard.dismiss()}
-          />
-        </View>
-      ) : (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text>No series found</Text>
-        </View>
-      );
+      return <SearchSeriesTab searchResults={searchResults} />;
     }
     if (tab === 'Authors') {
-      return searchResults.authors?.length ? (
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colors.card,
-            borderRadius: 8,
-            margin: 8,
-            paddingBottom: 8,
-            overflow: 'hidden',
-          }}>
-          <FlatList
-            data={searchResults.authors.filter((item) => !!item)}
-            keyExtractor={(item, index) => (item?.id ? String(item.id) : String(index))}
-            renderItem={({ item }) => (item ? <AuthorItem item={item} /> : null)}
-            numColumns={2}
-            columnWrapperStyle={{
-              paddingHorizontal: 4,
-              justifyContent: 'space-evenly',
-              paddingTop: 8,
-            }}
-            contentContainerStyle={{
-              gap: 8,
-              borderRadius: 8,
-              paddingBottom: 16,
-            }}
-            showsVerticalScrollIndicator={false}
-            onScrollBeginDrag={() => Keyboard.dismiss()}
-          />
-        </View>
-      ) : (
-        <View className="m-2 flex-1 items-center justify-center rounded-lg bg-card">
-          <Text>No authors found</Text>
-        </View>
-      );
+      return <SearchAuthorsTab searchResults={searchResults} />;
     }
     return null;
   };
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Tab Bar */}
-      <View
-        className=" relative flex-row justify-around bg-card"
-        style={{
-          paddingTop: insets.top,
-          paddingBottom: 15,
-        }}>
-        {tabs.map((tab, index) => (
-          <Pressable
-            key={tab}
-            onPress={() => handleTabPress(index)}
-            style={{
-              width: width / tabs.length,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <Text
-              className={`py-1 text-base font-medium ${
-                activeTab === index ? 'text-primary' : 'text-muted-foreground'
-              }`}>
-              {tab}
-            </Text>
-          </Pressable>
-        ))}
-        <Animated.View className=" absolute bottom-0 z-50 bg-primary" style={barStyle} />
-      </View>
-
+      <SearchTabBar activeTab={activeTab} onTabPress={handleTabPress} barStyle={barStyle} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 15 : 0}>
         <View className="flex-1">
-          {/* Swipeable Content */}
           <GestureDetector gesture={panGesture}>
             <Animated.View
               style={[
@@ -443,24 +143,7 @@ export default function SearchPage() {
               ))}
             </Animated.View>
           </GestureDetector>
-
-          {/* Input */}
-          <View className=" p-4 pt-2">
-            <Input
-              placeholder="Search..."
-              selectTextOnFocus
-              returnKeyType="search"
-              value={search}
-              onChangeText={setSearch}
-              style={{
-                height: 50,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: '#ccc',
-                paddingHorizontal: 16,
-              }}
-            />
-          </View>
+          <SearchInput value={search} onChangeText={setSearch} />
         </View>
       </KeyboardAvoidingView>
     </View>

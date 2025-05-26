@@ -20,6 +20,7 @@ export default function ProtectedLayout() {
         },
         headerShown: false,
       }}
+      backBehavior="history"
       initialRouteName="index">
       <Tabs.Screen
         name="stats"
