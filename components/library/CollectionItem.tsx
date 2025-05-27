@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { Badge } from '../ui/badge';
 import { Text } from '../ui/text';
 
-import { CollectionExpanded } from '~/app/(protected)/library/collections';
+import { CollectionExpanded } from '~/app/(protected)/library/(toptabs)/collections';
 import { store$ } from '~/stores';
 
 interface CollectionItemProps {

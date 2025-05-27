@@ -1,3 +1,5 @@
+import { Link } from 'expo-router';
+
 import { useGetLibraryById } from '~/api/queries/libraries/libraries';
 import { Container } from '~/components/Container';
 import { Text } from '~/components/ui/text';
@@ -12,6 +14,9 @@ export default function HomePage() {
     <Container>
       {isLoading ?? <Text>Loading...</Text>}
       <Text>{libraryData?.name}</Text>
+      <Link href="/library/books">
+        <Text>Go to Books</Text>
+      </Link>
     </Container>
   );
 }
