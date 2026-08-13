@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vinu",
     "slug": "Vinu",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "scheme": "Vinu",
     "web": {
       "bundler": "metro",
@@ -40,6 +40,7 @@
       }
     },
     "android": {
+      "versionCode": 2,
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

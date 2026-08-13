@@ -37,7 +37,11 @@ bun run android   # builds the dev client (native build required — RNTP is a n
 bun start         # metro for an already-installed dev client
 ```
 
-APK builds happen in CI (`.github/workflows/release.yml`) on `v*` tags or manual dispatch, via `expo prebuild` + Gradle. EAS profiles are configured in `eas.json` as well.
+### Releases
+
+APK builds happen in CI (`.github/workflows/release.yml`) via `expo prebuild` + Gradle, and run on pushes to `master`, on `v*` tags, and on manual dispatch. EAS profiles are configured in `eas.json` as well.
+
+The release tag is derived from `expo.version` in `app.json`. A build publishes a GitHub Release with the APK attached when that tag doesn't exist yet — so **bumping `expo.version` is what cuts a new downloadable release**; pushes that don't change the version still build and upload a workflow artifact, they just don't publish. Bump `android.versionCode` alongside the version so Android installs the new APK as an update over the old one.
 
 ### Notes
 

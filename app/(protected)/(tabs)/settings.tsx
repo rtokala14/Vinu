@@ -1,4 +1,5 @@
 import { use$ } from '@legendapp/state/react';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -236,7 +237,9 @@ export default function SettingsPage() {
           </Card>
         </View>
 
-        <Muted className="text-center text-xs">Vinu 0.0.1</Muted>
+        <Muted className="text-center text-xs">
+          Vinu {Constants.expoConfig?.version ?? '0.1.0'}
+        </Muted>
       </ScrollView>
     </SafeAreaView>
   );
