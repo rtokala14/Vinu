@@ -10,6 +10,7 @@ import axios from 'axios';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useLayoutEffect, useState } from 'react';
+import { Appearance } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
@@ -52,8 +53,11 @@ export default function Layout() {
   useLayoutEffect(() => {
     async function prepareApp() {
       try {
-        setColorScheme(store$.settings.theme.peek());
-        setAndroidNavigationBar(store$.settings.theme.peek());
+        const theme = store$.settings.theme.peek();
+        const resolvedTheme =
+          theme === 'system' ? (Appearance.getColorScheme() ?? 'dark') : theme;
+        setColorScheme(theme);
+        setAndroidNavigationBar(resolvedTheme);
 
         if (serverUrl && userToken !== undefined) {
           try {
