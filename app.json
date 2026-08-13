@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vinu",
     "slug": "Vinu",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "scheme": "Vinu",
     "web": {
       "bundler": "metro",
@@ -31,7 +31,7 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": ["**/*"],
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tokalarr.Vinu",
