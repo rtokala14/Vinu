@@ -10,12 +10,16 @@ A full-featured [Audiobookshelf](https://www.audiobookshelf.org/) client for And
   - Mini player docked above the tab bar
   - Listening progress synced to the server every 15 s (and on pause/seek), resilient to being offline
   - Multi-file audiobooks handled with a single continuous timeline
+- **Downloads & offline** — download books for local playback; listening while offline is recorded to a local session ledger and synced back to the server (`/api/session/local-all`) when you're back online
+- **Smart rewind** — resuming rewinds a little, scaled by how long you were away
+- **Bookmarks** — one-tap bookmark capture in the player (and car mode), with rename/delete and jump-to-bookmark from the item page
+- **Car mode** — glanceable full-screen player with oversized controls
 - **Home** — personalized shelves from your server (Continue Listening, Continue Series, Recently Added, Discover, Listen Again) with a library switcher
 - **Library** — browse Books, Series, Authors, Collections and Playlists with infinite scrolling
 - **Detail pages** — book/podcast, author, and series screens with progress, chapters, episodes, descriptions, and mark-finished
 - **Search** — books, series, and authors, all tappable through to their detail pages
-- **Stats** — listening dashboard: today / total / streak tiles, last-7-days chart, most-listened, recent sessions
-- **Settings** — theme, default playback speed, jump intervals, library selection
+- **Stats** — listening insights: goal ring with daily-goal setting, streaks, last-7-days chart, calendar heatmap, listening-clock (when you listen), projected finish dates for in-progress books, most-listened, recent sessions
+- **Settings** — theme, default playback speed, jump intervals, smart rewind, daily goal, downloads manager, library selection
 
 ## Stack
 

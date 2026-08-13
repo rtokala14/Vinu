@@ -1,4 +1,5 @@
 import { use$ } from '@legendapp/state/react';
+import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,19 +9,25 @@ import { LibrarySwitcher } from '~/components/home/LibrarySwitcher';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Separator } from '~/components/ui/separator';
+import { Switch } from '~/components/ui/switch';
 import { Text } from '~/components/ui/text';
 import { H1, Muted } from '~/components/ui/typography';
+import { ChevronRight } from '~/lib/icons/ChevronRight';
 import { FastForward } from '~/lib/icons/FastForward';
 import { Gauge } from '~/lib/icons/Gauge';
+import { HardDrive } from '~/lib/icons/HardDrive';
 import { LogOut } from '~/lib/icons/LogOut';
 import { Rewind } from '~/lib/icons/Rewind';
 import { Server } from '~/lib/icons/Server';
+import { Timer } from '~/lib/icons/Timer';
+import { TrendingUp } from '~/lib/icons/TrendingUp';
 import { User } from '~/lib/icons/User';
 import { cn } from '~/lib/utils';
 import { clearAuth, store$ } from '~/stores';
 
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 const JUMP_OPTIONS = [10, 15, 30, 60];
+const GOAL_OPTIONS = [0, 15, 30, 45, 60, 90];
 
 function SectionTitle({ children }: { children: string }) {
   return <Muted className="px-1 text-xs font-semibold uppercase tracking-wider">{children}</Muted>;
@@ -69,6 +76,8 @@ export default function SettingsPage() {
   const playbackRate = use$(store$.settings.playbackRate);
   const jumpForwardSec = use$(store$.settings.jumpForwardSec);
   const jumpBackwardsSec = use$(store$.settings.jumpBackwardsSec);
+  const smartRewind = use$(store$.settings.smartRewind);
+  const goalMinutesPerDay = use$(store$.settings.goalMinutesPerDay);
 
   const { mutate: logout, isPending } = useLogout({
     mutation: {
@@ -166,6 +175,54 @@ export default function SettingsPage() {
                 format={(option) => `${option}s`}
               />
             </View>
+            <Separator />
+            <View className="flex-row items-center justify-between gap-3">
+              <View className="flex-1 gap-0.5">
+                <View className="flex-row items-center gap-2">
+                  <Timer size={15} className="text-primary" />
+                  <Text className="text-base font-medium">Smart rewind</Text>
+                </View>
+                <Muted className="text-xs">
+                  Rewind a little on resume — more the longer you were away
+                </Muted>
+              </View>
+              <Switch
+                checked={smartRewind}
+                onCheckedChange={(checked) => store$.settings.smartRewind.set(checked)}
+              />
+            </View>
+          </Card>
+        </View>
+
+        <View className="gap-2">
+          <SectionTitle>Goals</SectionTitle>
+          <Card className="gap-2.5 p-4">
+            <View className="flex-row items-center gap-2">
+              <TrendingUp size={15} className="text-primary" />
+              <Text className="text-base font-medium">Daily listening goal</Text>
+            </View>
+            <OptionPills
+              options={GOAL_OPTIONS}
+              value={goalMinutesPerDay}
+              onSelect={(option) => store$.settings.goalMinutesPerDay.set(option)}
+              format={(option) => (option === 0 ? 'Off' : `${option}m`)}
+            />
+            <Muted className="text-xs">Shown as a progress ring on your Stats page</Muted>
+          </Card>
+        </View>
+
+        <View className="gap-2">
+          <SectionTitle>Storage</SectionTitle>
+          <Card className="p-4">
+            <Pressable
+              className="flex-row items-center justify-between gap-3 active:opacity-70"
+              onPress={() => router.push('/downloads')}>
+              <View className="flex-row items-center gap-2">
+                <HardDrive size={15} className="text-primary" />
+                <Text className="text-base font-medium">Downloads</Text>
+              </View>
+              <ChevronRight size={18} className="text-muted-foreground" />
+            </Pressable>
           </Card>
         </View>
 

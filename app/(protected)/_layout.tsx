@@ -10,6 +10,11 @@ export default function ProtectedLayout() {
       <Stack.Screen name="item/[id]" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="author/[id]" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="series/[id]" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="downloads" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen
+        name="car"
+        options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+      />
       <Stack.Screen
         name="player"
         options={{
