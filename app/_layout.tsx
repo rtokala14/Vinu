@@ -54,8 +54,7 @@ export default function Layout() {
     async function prepareApp() {
       try {
         const theme = store$.settings.theme.peek();
-        const resolvedTheme =
-          theme === 'system' ? (Appearance.getColorScheme() ?? 'dark') : theme;
+        const resolvedTheme = theme === 'system' ? (Appearance.getColorScheme() ?? 'dark') : theme;
         setColorScheme(theme);
         setAndroidNavigationBar(resolvedTheme);
 

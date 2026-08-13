@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { Badge } from '../ui/badge';
 import { Text } from '../ui/text';
 
-import { PlaylistExpanded } from '~/app/(protected)/library/playlists';
+import { PlaylistExpanded } from '~/app/(protected)/(tabs)/library/playlists';
 import { store$ } from '~/stores';
 
 interface PlaylistItemProps {

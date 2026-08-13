@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Author } from './author';
-import type { AuthorUpdated } from './authorUpdated';
 import type { AuthorMerged } from './authorMerged';
+import type { AuthorUpdated } from './authorUpdated';
 
 export type UpdateAuthorById200 = Author | AuthorUpdated | AuthorMerged;

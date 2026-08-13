@@ -44,6 +44,6 @@ export function getCurrentChapter(): BookChapter | undefined {
   const pos = player$.position.peek();
   if (!np?.chapters?.length) return undefined;
   return np.chapters.find(
-    (ch) => (ch.start ?? 0) <= pos && pos < (ch.end ?? Number.MAX_SAFE_INTEGER)
+    (ch) => ch != null && (ch.start ?? 0) <= pos && pos < (ch.end ?? Number.MAX_SAFE_INTEGER)
   );
 }

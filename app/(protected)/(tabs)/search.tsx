@@ -10,13 +10,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SearchAllTab } from '../../components/search/SearchAllTab';
-import { SearchAuthorsTab } from '../../components/search/SearchAuthorsTab';
-import { SearchBooksTab } from '../../components/search/SearchBooksTab';
-import { SearchInput } from '../../components/search/SearchInput';
-import { SearchSeriesTab } from '../../components/search/SearchSeriesTab';
-import { SearchTabBar } from '../../components/search/SearchTabBar';
-import { useSearchQuery } from '../../components/search/useSearchQuery';
+import { SearchAllTab } from '~/components/search/SearchAllTab';
+import { SearchAuthorsTab } from '~/components/search/SearchAuthorsTab';
+import { SearchBooksTab } from '~/components/search/SearchBooksTab';
+import { SearchInput } from '~/components/search/SearchInput';
+import { SearchSeriesTab } from '~/components/search/SearchSeriesTab';
+import { SearchTabBar } from '~/components/search/SearchTabBar';
+import { useSearchQuery } from '~/components/search/useSearchQuery';
 
 const { width } = Dimensions.get('window');
 const tabs = ['All', 'Books', 'Series', 'Authors'];
