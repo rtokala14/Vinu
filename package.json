@@ -1,7 +1,7 @@
 {
   "name": "vinu",
   "version": "0.0.1",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "scripts": {
     "start": "expo start --dev-client",
     "ios": "expo run:ios",
@@ -57,6 +57,7 @@
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.11.2",
     "react-native-tab-view": "^4.1.0",
+    "react-native-track-player": "^4.1.2",
     "react-native-web": "^0.20.0",
     "tailwind-merge": "^3.2.0",
     "zustand": "^4.5.1"

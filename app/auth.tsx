@@ -74,7 +74,6 @@ export default function Home() {
     mutation: {
       onSuccess: (data) => {
         store$.user.set(data.user);
-        store$.isAuthorized.set(true);
         store$.userToken.set(data.user?.token!);
         store$.currentLibraryId.set(data.userDefaultLibraryId);
         // console.log('Login successful: ', data.user);
