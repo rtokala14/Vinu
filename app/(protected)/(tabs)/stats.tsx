@@ -1,11 +1,19 @@
+import { use$ } from '@legendapp/state/react';
+import { useQuery } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useGetListeningStats } from '~/api/queries/me/me';
+import { getListeningSessions, useGetListeningStats, useGetMe } from '~/api/queries/me/me';
+import { FinishProjections } from '~/components/stats/FinishProjections';
+import { GoalRing } from '~/components/stats/GoalRing';
+import { Heatmap } from '~/components/stats/Heatmap';
+import { HourClock } from '~/components/stats/HourClock';
+import { SpeedDividend } from '~/components/stats/SpeedDividend';
 import { StatTile } from '~/components/stats/StatTile';
 import { DayBar, WeekBars } from '~/components/stats/WeekBars';
+import { dateKey, type SessionWithExtras } from '~/components/stats/insights';
 import { Card } from '~/components/ui/card';
 import { Separator } from '~/components/ui/separator';
 import { Text } from '~/components/ui/text';
@@ -15,15 +23,11 @@ import { Clock } from '~/lib/icons/Clock';
 import { Headphones } from '~/lib/icons/Headphones';
 import { TrendingUp } from '~/lib/icons/TrendingUp';
 import { formatDuration } from '~/lib/utils';
+import { store$ } from '~/stores';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-/** Local YYYY-MM-DD key matching the ABS days map. */
-function dateKey(date: Date): string {
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${m}-${d}`;
-}
+const SESSIONS_PER_PAGE = 100;
+const SESSION_PAGES = 3; // ~300 recent sessions is plenty for hour-of-day insight
 
 /** Consecutive listening days ending today (or yesterday, if today is still empty). */
 function computeStreak(days: Record<string, number>): number {
@@ -67,13 +71,48 @@ function relativeDate(epochMs: number | undefined): string {
   return new Date(epochMs).toLocaleDateString();
 }
 
+/** First `SESSION_PAGES` pages of recent sessions (newest first). */
+async function fetchRecentSessions(): Promise<SessionWithExtras[]> {
+  const first = await getListeningSessions({ itemsPerPage: SESSIONS_PER_PAGE, page: 0 });
+  const extraPages = Math.max(0, Math.min(SESSION_PAGES - 1, (first.numPages ?? 1) - 1));
+  const rest = await Promise.all(
+    Array.from({ length: extraPages }, (_, i) =>
+      getListeningSessions({ itemsPerPage: SESSIONS_PER_PAGE, page: i + 1 })
+    )
+  );
+  return [first, ...rest].flatMap((p) => (p.sessions ?? []) as SessionWithExtras[]);
+}
+
 export default function StatsPage() {
   const router = useRouter();
-  const { data: stats, isLoading, refetch, isRefetching } = useGetListeningStats();
+  const goalMinutesPerDay = use$(store$.settings.goalMinutesPerDay);
+  const playbackRate = use$(store$.settings.playbackRate);
 
-  const days = useMemo(() => (stats?.days ?? {}) as Record<string, number>, [stats]);
+  const { data: stats, isLoading, refetch: refetchStats, isRefetching } = useGetListeningStats();
+  // Fresh /api/me for mediaProgress (finish projections); store$.user can be stale.
+  const { data: me, refetch: refetchMe } = useGetMe();
+  const { data: recentSessionPages, refetch: refetchSessions } = useQuery({
+    queryKey: ['stats', 'recent-sessions'],
+    queryFn: fetchRecentSessions,
+  });
+
+  const onRefresh = useCallback(() => {
+    refetchStats();
+    refetchMe();
+    refetchSessions();
+  }, [refetchStats, refetchMe, refetchSessions]);
+
+  // Merge `today` into the days map: right after midnight the server's days
+  // map can lag behind the `today` field, and every chart reads from `days`.
+  const days = useMemo(() => {
+    const map = { ...((stats?.days ?? {}) as Record<string, number>) };
+    const todayKey = dateKey(new Date());
+    map[todayKey] = Math.max(map[todayKey] ?? 0, stats?.today ?? 0);
+    return map;
+  }, [stats]);
   const weekBars = useMemo(() => lastSevenDays(days), [days]);
   const streak = useMemo(() => computeStreak(days), [days]);
+  const daysListened = useMemo(() => Object.values(days).filter((s) => s > 0).length, [days]);
 
   const topItems = useMemo(
     () =>
@@ -82,9 +121,12 @@ export default function StatsPage() {
         .slice(0, 5),
     [stats]
   );
+  const topItemMax = topItems[0]?.timeListening ?? 0;
 
   const totalHours = Math.floor(((stats?.totalTime as number | undefined) ?? 0) / 3600);
-  const recentSessions = stats?.recentSessions ?? [];
+  const todaySeconds = stats?.today ?? 0;
+  const recentSessions = (stats?.recentSessions ?? []) as SessionWithExtras[];
+  const hourSessions = recentSessionPages ?? [];
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
@@ -102,20 +144,24 @@ export default function StatsPage() {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
-              onRefresh={() => refetch()}
+              onRefresh={onRefresh}
               tintColor="#B45309"
               colors={['#B45309']}
             />
           }>
           <View className="flex-row gap-3">
-            <StatTile icon={Clock} label="Today" value={formatDuration(stats?.today)} />
+            {goalMinutesPerDay > 0 ? (
+              <GoalRing todaySeconds={todaySeconds} goalMinutes={goalMinutesPerDay} />
+            ) : (
+              <StatTile icon={Clock} label="Today" value={formatDuration(todaySeconds)} />
+            )}
             <StatTile icon={Headphones} label="Total" value={`${totalHours.toLocaleString()}h`} />
           </View>
           <View className="flex-row gap-3">
             <StatTile
               icon={CalendarDays}
               label="Days listened"
-              value={Object.keys(days).length.toLocaleString()}
+              value={daysListened.toLocaleString()}
             />
             <StatTile
               icon={TrendingUp}
@@ -131,6 +177,19 @@ export default function StatsPage() {
             </View>
           </Card>
 
+          <Heatmap days={days} />
+
+          <FinishProjections
+            mediaProgress={me?.mediaProgress ?? store$.user.peek()?.mediaProgress}
+            items={stats?.items}
+            days={days}
+            playbackRate={playbackRate}
+          />
+
+          <HourClock sessions={hourSessions} />
+
+          <SpeedDividend playbackRate={playbackRate} />
+
           {topItems.length > 0 && (
             <Card className="p-4">
               <Text className="text-base font-semibold">Most listened</Text>
@@ -144,13 +203,24 @@ export default function StatsPage() {
                       <Text className="w-6 text-center text-base font-bold text-primary">
                         {index + 1}
                       </Text>
-                      <View className="flex-1">
+                      <View className="min-w-0 flex-1">
                         <Text numberOfLines={1} className="text-sm font-medium">
                           {item.mediaMetadata?.title}
                         </Text>
                         <Muted numberOfLines={1} className="text-xs">
                           {item.mediaMetadata?.authorName}
                         </Muted>
+                        {/* Proportional hairline: time vs. the #1 item (single-hue magnitude). */}
+                        {topItemMax > 0 && (
+                          <View className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+                            <View
+                              className="h-full rounded-full bg-primary/60"
+                              style={{
+                                width: `${Math.max(2, Math.round(((item.timeListening ?? 0) / topItemMax) * 100))}%`,
+                              }}
+                            />
+                          </View>
+                        )}
                       </View>
                       <Muted className="text-xs font-medium">
                         {formatDuration(item.timeListening)}
@@ -175,13 +245,18 @@ export default function StatsPage() {
                         session.libraryItemId &&
                         router.push(`/item/${session.libraryItemId}` as Href)
                       }>
-                      <View className="flex-1">
+                      <View className="min-w-0 flex-1">
                         <Text numberOfLines={1} className="text-sm font-medium">
                           {session.displayTitle}
                         </Text>
                         <Muted numberOfLines={1} className="text-xs">
                           {session.displayAuthor}
                         </Muted>
+                        {!!session.deviceInfo?.deviceName && (
+                          <Muted numberOfLines={1} className="text-[10px]">
+                            via {session.deviceInfo.deviceName}
+                          </Muted>
+                        )}
                       </View>
                       <View className="items-end">
                         <Text className="text-xs font-medium">
