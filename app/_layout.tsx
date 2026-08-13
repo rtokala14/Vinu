@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 import { NAV_THEME } from '~/lib/constants';
+import { initOfflineSessionSync, pruneLocalProgress, reconcileDownloads } from '~/lib/downloads';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { store$ } from '~/stores';
 
@@ -54,10 +55,15 @@ export default function Layout() {
     async function prepareApp() {
       try {
         const theme = store$.settings.theme.peek();
-        const resolvedTheme =
-          theme === 'system' ? (Appearance.getColorScheme() ?? 'dark') : theme;
+        const resolvedTheme = theme === 'system' ? (Appearance.getColorScheme() ?? 'dark') : theme;
         setColorScheme(theme);
         setAndroidNavigationBar(resolvedTheme);
+
+        // Downloads/offline: verify local files, arm the offline-session
+        // ledger flush (network regain + app foreground), drop stale progress.
+        void reconcileDownloads();
+        initOfflineSessionSync();
+        void pruneLocalProgress();
 
         if (serverUrl && userToken !== undefined) {
           try {
@@ -77,8 +83,16 @@ export default function Layout() {
               store$.user.set(undefined);
             }
           } catch (error) {
-            console.error('Auto-authorization failed: ', error);
-            store$.user.set(undefined);
+            // Sign out ONLY when the server explicitly rejected the token.
+            // Network failures (offline, server down) must keep the persisted
+            // session so downloads and offline playback stay available.
+            const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+            if (status === 401 || status === 403) {
+              console.warn('Stored token rejected by server, signing out');
+              store$.user.set(undefined);
+            } else {
+              console.warn('Auto-authorization skipped (server unreachable):', error);
+            }
           }
         }
       } catch (e) {

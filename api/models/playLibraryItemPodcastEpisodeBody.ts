@@ -8,8 +8,8 @@
 import type { DeviceInfo } from './deviceInfo';
 import type { ForceDirectPlay } from './forceDirectPlay';
 import type { ForceTranscode } from './forceTranscode';
-import type { SupportedMimeTypes } from './supportedMimeTypes';
 import type { MediaPlayer } from './mediaPlayer';
+import type { SupportedMimeTypes } from './supportedMimeTypes';
 
 export type PlayLibraryItemPodcastEpisodeBody = {
   deviceInfo?: DeviceInfo;

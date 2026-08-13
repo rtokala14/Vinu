@@ -9,6 +9,10 @@ export const store$ = observable({
     playbackRate: 1 as number,
     jumpForwardSec: 30 as number,
     jumpBackwardsSec: 30 as number,
+    /** Daily listening goal in minutes; 0 disables the goal UI. */
+    goalMinutesPerDay: 0 as number,
+    /** Rewind-on-resume scaled by time away; on by default. */
+    smartRewind: true as boolean,
   },
   user: undefined as User | undefined,
   userToken: undefined as string | undefined,

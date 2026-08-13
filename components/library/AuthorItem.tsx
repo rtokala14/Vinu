@@ -1,6 +1,7 @@
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, View } from 'react-native';
 
 import { Badge } from '../ui/badge';
 import { Text } from '../ui/text';
@@ -10,10 +11,13 @@ import { store$ } from '~/stores';
 
 export function AuthorItem({ item }: { item: AuthorMinified }) {
   const { colors } = useTheme();
+  const router = useRouter();
   const coverPath = `${store$.settings.serverUrl.peek()}/api/authors/${item.id}/image?format=webp`;
 
   return (
-    <View className="flex flex-col items-center justify-center gap-2">
+    <Pressable
+      onPress={() => item.id && router.push({ pathname: '/author/[id]', params: { id: item.id } })}
+      className="flex flex-col items-center justify-center gap-2">
       <View
         style={{
           marginBottom: 4,
@@ -39,6 +43,6 @@ export function AuthorItem({ item }: { item: AuthorMinified }) {
         </Badge>
       </View>
       <Text>{item.name}</Text>
-    </View>
+    </Pressable>
   );
 }

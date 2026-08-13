@@ -3,6 +3,7 @@ export type { NowPlaying, SleepTimerState } from './state';
 export {
   playLibraryItem,
   togglePlayPause,
+  resumePlayback,
   seekTo,
   jumpForward,
   jumpBackward,
@@ -11,3 +12,4 @@ export {
   cancelSleepTimer,
   stopPlayback,
 } from './actions';
+export { getDeviceId } from './deviceId';

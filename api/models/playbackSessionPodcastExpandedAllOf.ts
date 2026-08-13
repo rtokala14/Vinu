@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AudioTrack } from './audioTrack';
-import type { PlaybackSessionPodcastExpandedAllOfVideoTrack } from './playbackSessionPodcastExpandedAllOfVideoTrack';
 import type { LibraryItem } from './libraryItem';
+import type { PlaybackSessionPodcastExpandedAllOfVideoTrack } from './playbackSessionPodcastExpandedAllOfVideoTrack';
 
 export type PlaybackSessionPodcastExpandedAllOf = {
   /** The audio tracks of the media. */

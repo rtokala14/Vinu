@@ -6,9 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { LibraryItemBase } from './libraryItemBase';
-import type { Total } from './total';
 import type { Limit } from './limit';
 import type { PlaybackSession } from './playbackSession';
+import type { Total } from './total';
 
 export type GetSessions200 = {
   results?: LibraryItemBase[];

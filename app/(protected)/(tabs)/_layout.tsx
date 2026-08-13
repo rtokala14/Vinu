@@ -12,54 +12,54 @@ export default function TabsLayout() {
   return (
     <View className="flex-1">
       <Tabs
-      screenOptions={{
-        animation: 'shift',
-        tabBarStyle: {
-          borderTopStartRadius: 10,
-          borderTopEndRadius: 10,
-          shadowRadius: 10,
-          height: 80,
-          paddingTop: 5,
-        },
-        headerShown: false,
-      }}
-      backBehavior="history"
-      initialRouteName="index">
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: 'Stats',
-          tabBarIcon: ({ color, size }) => <ChartColumnIncreasing size={size} color={color} />,
+        screenOptions={{
+          animation: 'shift',
+          tabBarStyle: {
+            borderTopStartRadius: 10,
+            borderTopEndRadius: 10,
+            shadowRadius: 10,
+            height: 80,
+            paddingTop: 5,
+          },
+          headerShown: false,
         }}
-      />
-      <Tabs.Screen
-        name="library"
-        options={{
-          title: 'Library',
-          tabBarIcon: ({ color, size }) => <LibraryBig size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
-        }}
-      />
+        backBehavior="history"
+        initialRouteName="index">
+        <Tabs.Screen
+          name="stats"
+          options={{
+            title: 'Stats',
+            tabBarIcon: ({ color, size }) => <ChartColumnIncreasing size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="library"
+          options={{
+            title: 'Library',
+            tabBarIcon: ({ color, size }) => <LibraryBig size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="search"
+          options={{
+            title: 'Search',
+            tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          }}
+        />
       </Tabs>
       <MiniPlayer />
     </View>

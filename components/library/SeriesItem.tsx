@@ -1,6 +1,7 @@
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, View } from 'react-native';
 
 import { Badge } from '../ui/badge';
 import { Text } from '../ui/text';
@@ -14,11 +15,21 @@ interface SeriesItemProps {
 
 export function SeriesItem({ item }: SeriesItemProps) {
   const { colors } = useTheme();
+  const router = useRouter();
 
   const covers = (item.books || []).slice(0, 6);
+  // Search results nest the series under a `series` key instead of flattening it.
+  const nested = (item as { series?: { id?: string; name?: string } }).series;
+  const seriesId = item.id ?? nested?.id;
+  const seriesName = item.name ?? nested?.name;
 
   return (
-    <View className="flex flex-col items-center justify-center gap-2">
+    <Pressable
+      onPress={() =>
+        seriesId &&
+        router.push({ pathname: '/series/[id]', params: { id: seriesId, name: seriesName ?? '' } })
+      }
+      className="flex flex-col items-center justify-center gap-2">
       <View
         style={{
           flexDirection: 'row',
@@ -56,12 +67,11 @@ export function SeriesItem({ item }: SeriesItemProps) {
         </Badge>
       </View>
       <Text className="line-clamp-2 w-24 text-wrap text-center text-base font-semibold">
-        {/* @ts-expect-error */}
-        {item.name ?? item.series.name}
+        {seriesName}
       </Text>
       <Text className="-mt-2 mb-1 text-sm font-light">
         {item.books![0].media?.metadata?.authorName}
       </Text>
-    </View>
+    </Pressable>
   );
 }

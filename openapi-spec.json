@@ -71,9 +71,7 @@
         "operationId": "getAuthorById",
         "summary": "Get an author by ID",
         "description": "Get an author by ID. The author's books and series can be included in the response.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "parameters": [
           {
             "in": "query",
@@ -106,9 +104,7 @@
         "operationId": "updateAuthorById",
         "summary": "Update an author by ID",
         "description": "Update an author by ID. The author's name and description can be updated. This endpoint will merge two authors if the new author name matches another author name in the database.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "requestBody": {
           "description": "The author object to update.",
           "content": {
@@ -162,9 +158,7 @@
         "operationId": "deleteAuthorById",
         "summary": "Delete an author by ID",
         "description": "Delete an author by ID. This will remove the author from all books.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "responses": {
           "200": {
             "description": "deleteAuthorById OK",
@@ -216,9 +210,7 @@
         "summary": "Get an author image by author ID",
         "description": "Get an author image by author ID. The image will be returned in the requested format and size.",
         "security": [],
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "requestBody": {
           "required": false,
           "description": "The author image to get.",
@@ -276,9 +268,7 @@
         "operationId": "addAuthorImageById",
         "summary": "Add an author image to the server",
         "description": "Add an author image to the server. The image will be downloaded from the provided URL and stored on the server.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "requestBody": {
           "required": true,
           "description": "The author image to add by URL.",
@@ -311,9 +301,7 @@
         "operationId": "updateAuthorImageById",
         "summary": "Update an author image by author ID",
         "description": "Update an author image by author ID. The image will be resized if the width, height, or format is provided.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "requestBody": {
           "description": "The author image to update.",
           "content": {
@@ -358,9 +346,7 @@
         "operationId": "deleteAuthorImageById",
         "summary": "Delete an author image by author ID",
         "description": "Delete an author image by author ID. This will remove the image from the server and the database.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "responses": {
           "200": {
             "description": "deleteAuthorImageById OK"
@@ -387,9 +373,7 @@
         "operationId": "matchAuthorById",
         "summary": "Match the author against Audible using quick match",
         "description": "Match the author against Audible using quick match. Quick match updates the author's description and image (if no image already existed) with information from audible. Either `asin` or `q` must be provided, with `asin` taking priority if both are provided.",
-        "tags": [
-          "Authors"
-        ],
+        "tags": ["Authors"],
         "requestBody": {
           "required": true,
           "description": "The author object to match against an online provider.",
@@ -441,9 +425,7 @@
         "summary": "Get email settings",
         "description": "Get email settings for sending e-books to e-readers.",
         "operationId": "getEmailSettings",
-        "tags": [
-          "Email"
-        ],
+        "tags": ["Email"],
         "responses": {
           "200": {
             "$ref": "#/components/responses/email200"
@@ -453,9 +435,7 @@
       "patch": {
         "summary": "Update email settings",
         "operationId": "updateEmailSettings",
-        "tags": [
-          "Email"
-        ],
+        "tags": ["Email"],
         "requestBody": {
           "required": true,
           "content": {
@@ -477,9 +457,7 @@
       "post": {
         "summary": "Send test email",
         "operationId": "sendTestEmail",
-        "tags": [
-          "Email"
-        ],
+        "tags": ["Email"],
         "responses": {
           "200": {
             "description": "Successful response"
@@ -491,9 +469,7 @@
       "post": {
         "summary": "Update e-reader devices",
         "operationId": "updateEReaderDevices",
-        "tags": [
-          "Email"
-        ],
+        "tags": ["Email"],
         "requestBody": {
           "required": true,
           "content": {
@@ -526,9 +502,7 @@
       "post": {
         "summary": "Send ebook to device",
         "operationId": "sendEBookToDevice",
-        "tags": [
-          "Email"
-        ],
+        "tags": ["Email"],
         "requestBody": {
           "required": true,
           "content": {
@@ -568,9 +542,7 @@
         "operationId": "getLibraries",
         "summary": "Get all libraries on server",
         "description": "Get all libraries on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "responses": {
           "200": {
             "description": "getLibraries OK",
@@ -596,19 +568,14 @@
         "operationId": "createLibrary",
         "summary": "Create a new library on server",
         "description": "Create a new library on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "requestBody": {
           "description": "The library object to create.",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "folders"
-                ],
+                "required": ["name", "folders"],
                 "properties": {
                   "name": {
                     "$ref": "#/components/schemas/libraryName"
@@ -662,9 +629,7 @@
         "operationId": "getLibraryById",
         "summary": "Get a single library by ID on server",
         "description": "Get a single library by ID on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "parameters": [
           {
             "in": "query",
@@ -691,9 +656,7 @@
         "operationId": "updateLibraryById",
         "summary": "Update a single library by ID on server",
         "description": "Update a single library by ID on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "requestBody": {
           "required": true,
           "description": "The library object to update.",
@@ -741,9 +704,7 @@
         "operationId": "deleteLibraryById",
         "summary": "Delete a single library by ID on server",
         "description": "Delete a single library by ID on server and return the deleted object.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "responses": {
           "200": {
             "$ref": "#/components/responses/library200"
@@ -770,9 +731,7 @@
         "operationId": "getLibraryAuthors",
         "summary": "Get all authors in a library",
         "description": "Get all authors in a library by ID on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "responses": {
           "200": {
             "description": "getLibraryAuthors OK",
@@ -814,9 +773,7 @@
         "operationId": "getLibraryItems",
         "summary": "Get items in a library",
         "description": "Get items in a library by ID on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "parameters": [
           {
             "$ref": "#/components/parameters/limit"
@@ -940,9 +897,7 @@
         "operationId": "deleteLibraryIssues",
         "summary": "Delete items with issues in a library.",
         "description": "Delete all items with issues in a library by library ID on the server. This only removes the items from the ABS database and does not delete media files.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "responses": {
           "200": {
             "description": "deleteLibraryIssues OK",
@@ -977,9 +932,7 @@
         "operationId": "getLibrarySeries",
         "summary": "Get library series",
         "description": "Get series in a library. Filtering and sorting can be applied.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "parameters": [
           {
             "$ref": "#/components/parameters/limit"
@@ -1106,9 +1059,7 @@
         "summary": "Get single series in library",
         "description": "Get a single series in a library by ID on server. This endpoint is deprecated and `/api/series/{id}` should be used instead.",
         "deprecated": true,
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "parameters": [
           {
             "$ref": "#/components/parameters/limit"
@@ -1182,9 +1133,7 @@
         "operationId": "getNotifications",
         "summary": "Get notification settings",
         "description": "Get all Apprise notification events and notification settings for server.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "responses": {
           "200": {
             "description": "Success",
@@ -1221,9 +1170,7 @@
         "operationId": "configureNotificationSettings",
         "summary": "Update select notification settings",
         "description": "Update the URL, max failed attempts, and maximum notifications that can be queued for Apprise.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1257,9 +1204,7 @@
         "operationId": "createNotification",
         "summary": "Create notification settings",
         "description": "Create or update Notification settings.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1288,12 +1233,7 @@
                     "$ref": "#/components/schemas/notificationType"
                   }
                 },
-                "required": [
-                  "eventName",
-                  "urls",
-                  "titleTemplate",
-                  "bodyTemplate"
-                ]
+                "required": ["eventName", "urls", "titleTemplate", "bodyTemplate"]
               }
             }
           }
@@ -1325,9 +1265,7 @@
         "operationId": "getNotificationEventData",
         "summary": "Get notification event data",
         "description": "Get all Apprise notification event data for the server.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "responses": {
           "200": {
             "description": "Success",
@@ -1358,9 +1296,7 @@
         "operationId": "sendDefaultTestNotification",
         "summary": "Send general test notification",
         "description": "Send a test notification.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "parameters": [
           {
             "in": "query",
@@ -1397,9 +1333,7 @@
         "operationId": "deleteNotification",
         "summary": "Delete a notification",
         "description": "Delete the notification by ID and return the notification settings.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "responses": {
           "200": {
             "description": "Success",
@@ -1425,9 +1359,7 @@
         "operationId": "updateNotification",
         "summary": "Update a notification",
         "description": "Update an individual Notification by ID",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1498,9 +1430,7 @@
         "operationId": "sendTestNotification",
         "summary": "Send a test notification",
         "description": "Send a test to the given notification by ID.",
-        "tags": [
-          "Notification"
-        ],
+        "tags": ["Notification"],
         "responses": {
           "200": {
             "$ref": "#/components/responses/notification200"
@@ -1515,9 +1445,7 @@
       "post": {
         "summary": "Create a new podcast",
         "operationId": "createPodcast",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1555,9 +1483,7 @@
       "post": {
         "summary": "Get podcast feed",
         "operationId": "getPodcastFeed",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1607,9 +1533,7 @@
         "summary": "Get feeds from OPML text",
         "description": "Parse OPML text and return an array of feeds",
         "operationId": "getFeedsFromOPMLText",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1664,9 +1588,7 @@
       "post": {
         "summary": "Bulk create podcasts from OPML feed URLs",
         "operationId": "bulkCreatePodcastsFromOpmlFeedUrls",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1724,9 +1646,7 @@
       "get": {
         "summary": "Check and download new episodes",
         "operationId": "checkNewEpisodes",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "parameters": [
           {
             "name": "limit",
@@ -1784,9 +1704,7 @@
       "get": {
         "summary": "Clear episode download queue",
         "operationId": "clearEpisodeDownloadQueue",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "responses": {
           "200": {
             "description": "Successfully cleared download queue"
@@ -1812,9 +1730,7 @@
       "get": {
         "summary": "Get episode downloads",
         "operationId": "getEpisodeDownloads",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "responses": {
           "200": {
             "description": "Successfully retrieved episode downloads",
@@ -1855,9 +1771,7 @@
       "get": {
         "summary": "Find episode by title",
         "operationId": "findEpisode",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "parameters": [
           {
             "name": "title",
@@ -1912,9 +1826,7 @@
       "post": {
         "summary": "Download podcast episodes",
         "operationId": "downloadEpisodes",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -1956,9 +1868,7 @@
       "post": {
         "summary": "Quick match podcast episodes",
         "operationId": "quickMatchEpisodes",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "parameters": [
           {
             "name": "override",
@@ -2016,9 +1926,7 @@
       "patch": {
         "summary": "Update a podcast episode",
         "operationId": "updateEpisode",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "requestBody": {
           "required": true,
           "content": {
@@ -2048,9 +1956,7 @@
       "get": {
         "summary": "Get a specific podcast episode",
         "operationId": "getEpisode",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "responses": {
           "200": {
             "description": "Successfully retrieved episode",
@@ -2070,9 +1976,7 @@
       "delete": {
         "summary": "Remove a podcast episode",
         "operationId": "removeEpisode",
-        "tags": [
-          "Podcasts"
-        ],
+        "tags": ["Podcasts"],
         "parameters": [
           {
             "name": "hard",
@@ -2118,9 +2022,7 @@
       ],
       "get": {
         "operationId": "getSeries",
-        "tags": [
-          "Series"
-        ],
+        "tags": ["Series"],
         "summary": "Get series",
         "description": "Get a series by ID.",
         "requestBody": {
@@ -2135,12 +2037,7 @@
                     "type": "string",
                     "description": "A comma separated list of what to include with the series.",
                     "example": "progress,rssfeed",
-                    "enum": [
-                      "progress",
-                      "rssfeed",
-                      "progress,rssfeed",
-                      "rssfeed,progress"
-                    ]
+                    "enum": ["progress", "rssfeed", "progress,rssfeed", "rssfeed,progress"]
                   }
                 }
               }
@@ -2165,9 +2062,7 @@
       },
       "patch": {
         "operationId": "updateSeries",
-        "tags": [
-          "Series"
-        ],
+        "tags": ["Series"],
         "summary": "Update series",
         "description": "Update a series by ID.",
         "requestBody": {
@@ -2210,9 +2105,7 @@
         "summary": "Login to the server",
         "description": "Logs in a client to the server, returning information about the user and server.",
         "operationId": "login",
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -2266,9 +2159,7 @@
         "summary": "Logout from the server",
         "description": "Logs out a client from the server. If the socketId parameter is provided, the server removes the socket from the client list.",
         "operationId": "logout",
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -2331,9 +2222,7 @@
         "operationId": "getLibraryItem",
         "summary": "Get a single library item by ID on server.",
         "description": "Get a single library item by ID on server.",
-        "tags": [
-          "LibraryItem"
-        ],
+        "tags": ["LibraryItem"],
         "parameters": [
           {
             "$ref": "#/components/parameters/include"
@@ -2384,9 +2273,7 @@
         "operationId": "playLibraryItem",
         "summary": "Play a library item",
         "description": "Play a library item by ID.",
-        "tags": [
-          "LibraryItem"
-        ],
+        "tags": ["LibraryItem"],
         "requestBody": {
           "required": true,
           "content": {
@@ -2455,9 +2342,7 @@
         "operationId": "playLibraryItemPodcastEpisode",
         "summary": "Play a podcast episode",
         "description": "Play a podcast by library item ID and episode ID.",
-        "tags": [
-          "LibraryItem"
-        ],
+        "tags": ["LibraryItem"],
         "requestBody": {
           "required": true,
           "content": {
@@ -2506,9 +2391,7 @@
         "operationId": "getMe",
         "summary": "Get the current user.",
         "description": "Get the current user.",
-        "tags": [
-          "Me"
-        ],
+        "tags": ["Me"],
         "responses": {
           "200": {
             "description": "Success",
@@ -2539,9 +2422,7 @@
         "operationId": "getProgressLibraryItem",
         "summary": "Get the user's progress for a library item.",
         "description": "Get the user's progress for a library item.",
-        "tags": [
-          "Me"
-        ],
+        "tags": ["Me"],
         "responses": {
           "200": {
             "description": "OK",
@@ -2584,9 +2465,7 @@
         "operationId": "getProgressPodcastEpisode",
         "summary": "Get the user's progress for a podcast episode.",
         "description": "Get the user's progress for a podcast episode.",
-        "tags": [
-          "Me"
-        ],
+        "tags": ["Me"],
         "responses": {
           "200": {
             "description": "OK",
@@ -2609,9 +2488,7 @@
         "operationId": "syncOpenSession",
         "summary": "Sync an open session.",
         "description": "Sync an open session.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "parameters": [
           {
             "name": "id",
@@ -2688,9 +2565,7 @@
         "operationId": "deleteSession",
         "summary": "Delets a listening session.",
         "description": "Deletes a listening session.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "parameters": [
           {
             "name": "id",
@@ -2744,9 +2619,7 @@
         "operationId": "closeSession",
         "summary": "Close a listening session.",
         "description": "Close a listening session.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "parameters": [
           {
             "name": "id",
@@ -2816,9 +2689,7 @@
         "operationId": "getSession",
         "summary": "Get a listening session.",
         "description": "Get a listening session.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "parameters": [
           {
             "name": "id",
@@ -2860,9 +2731,7 @@
         "operationId": "getSessions",
         "summary": "Get all listening sessions.",
         "description": "Get all listening sessions.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "parameters": [
           {
             "name": "user",
@@ -2950,9 +2819,7 @@
         "operationId": "getListeningSessions",
         "summary": "Get all listening sessions for the current user.",
         "description": "Get all listening sessions for the current user.",
-        "tags": [
-          "Me"
-        ],
+        "tags": ["Me"],
         "parameters": [
           {
             "name": "itemsPerPage",
@@ -3010,9 +2877,7 @@
         "operationId": "getListeningStats",
         "summary": "Get listening stats for the current user.",
         "description": "Get listening stats for the current user.",
-        "tags": [
-          "Me"
-        ],
+        "tags": ["Me"],
         "responses": {
           "200": {
             "description": "OK",
@@ -3087,9 +2952,7 @@
         "operationId": "createLocalSession",
         "summary": "Create a local session.",
         "description": "Create a local session.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "requestBody": {
           "required": true,
           "content": {
@@ -3131,9 +2994,7 @@
         "operationId": "createLocalSessionAll",
         "summary": "Create a local session for all users.",
         "description": "Create a local session for all users.",
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "requestBody": {
           "required": true,
           "content": {
@@ -3188,9 +3049,7 @@
         "operationId": "searchLibrary",
         "summary": "Search library",
         "description": "Search library by ID on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "parameters": [
           {
             "name": "q",
@@ -3284,9 +3143,7 @@
         "operationId": "getLibraryFilterData",
         "summary": "Get filter data for library",
         "description": "Get filter data for library by ID on server.",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "responses": {
           "200": {
             "description": "getLibraryFilterData OK",
@@ -3331,9 +3188,7 @@
         "operationId": "getPersonalizedLibrary",
         "summary": "Get personalized library (home page).",
         "description": "Get personalized library (home page).",
-        "tags": [
-          "Libraries"
-        ],
+        "tags": ["Libraries"],
         "responses": {
           "200": {
             "description": "OK",
@@ -3437,10 +3292,7 @@
       "mediaType": {
         "type": "string",
         "description": "The type of media, will be book or podcast.",
-        "enum": [
-          "book",
-          "podcast"
-        ]
+        "enum": ["book", "podcast"]
       },
       "bookCoverPath": {
         "description": "The absolute path on the server of the cover file. Will be null if there is no cover.",
@@ -3454,10 +3306,7 @@
         "items": {
           "type": "string"
         },
-        "example": [
-          "To Be Read",
-          "Genre: Nonfiction"
-        ]
+        "example": ["To Be Read", "Genre: Nonfiction"]
       },
       "size": {
         "description": "The total size (in bytes) of the item or file.",
@@ -3881,11 +3730,7 @@
             "items": {
               "type": "string"
             },
-            "example": [
-              "Fantasy",
-              "Sci-Fi",
-              "Nonfiction: History"
-            ]
+            "example": ["Fantasy", "Sci-Fi", "Nonfiction: History"]
           },
           "publishedYear": {
             "description": "The year the book was published. Will be null if unknown.",
@@ -4368,12 +4213,7 @@
           "availabilityOption": {
             "type": "string",
             "description": "The availability option for the device.",
-            "enum": [
-              "adminOrUp",
-              "userOrUp",
-              "guestOrUp",
-              "specificUsers"
-            ]
+            "enum": ["adminOrUp", "userOrUp", "guestOrUp", "specificUsers"]
           },
           "users": {
             "type": "array",
@@ -4383,11 +4223,7 @@
             }
           }
         },
-        "required": [
-          "name",
-          "email",
-          "availabilityOption"
-        ]
+        "required": ["name", "email", "availabilityOption"]
       },
       "EmailSettings": {
         "type": "object",
@@ -4447,12 +4283,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "port",
-          "secure",
-          "ereaderDevices"
-        ]
+        "required": ["id", "port", "secure", "ereaderDevices"]
       },
       "libraryName": {
         "description": "The name of the library.",
@@ -4891,10 +4722,7 @@
       "notificationEventName": {
         "type": "string",
         "description": "The name of the event the notification will fire on.",
-        "enum": [
-          "onPodcastEpisodeDownloaded",
-          "onTest"
-        ]
+        "enum": ["onPodcastEpisodeDownloaded", "onTest"]
       },
       "urls": {
         "type": "array",
@@ -4921,12 +4749,7 @@
       },
       "notificationType": {
         "type": "string",
-        "enum": [
-          "info",
-          "success",
-          "warning",
-          "failure"
-        ],
+        "enum": ["info", "success", "warning", "failure"],
         "nullable": true,
         "default": "info",
         "description": "The notification's type."
@@ -6227,13 +6050,7 @@
             "description": "The type of items the shelf contains.",
             "type": "string",
             "example": "book",
-            "enum": [
-              "book",
-              "podcast",
-              "series",
-              "authors",
-              "episode"
-            ]
+            "enum": ["book", "podcast", "series", "authors", "episode"]
           },
           "category": {
             "description": "The category of the shelf.",

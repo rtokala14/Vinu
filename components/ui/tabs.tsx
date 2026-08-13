@@ -1,7 +1,8 @@
 import * as TabsPrimitive from '@rn-primitives/tabs';
 import * as React from 'react';
-import { cn } from '~/lib/utils';
+
 import { TextClassContext } from '~/components/ui/text';
+import { cn } from '~/lib/utils';
 
 const Tabs = TabsPrimitive.Root;
 
@@ -14,7 +15,7 @@ function TabsList({
   return (
     <TabsPrimitive.List
       className={cn(
-        'web:inline-flex h-10 native:h-12 items-center justify-center rounded-md bg-muted p-1 native:px-1.5',
+        'native:h-12 native:px-1.5 h-10 items-center justify-center rounded-md bg-muted p-1 web:inline-flex',
         className
       )}
       {...props}
@@ -34,12 +35,11 @@ function TabsTrigger({
       value={cn(
         'text-sm native:text-base font-medium text-muted-foreground web:transition-all',
         value === props.value && 'text-foreground'
-      )}
-    >
+      )}>
       <TabsPrimitive.Trigger
         className={cn(
-          'inline-flex items-center justify-center shadow-none web:whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium web:ring-offset-background web:transition-all web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
-          props.disabled && 'web:pointer-events-none opacity-50',
+          'inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium shadow-none web:whitespace-nowrap web:ring-offset-background web:transition-all web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
+          props.disabled && 'opacity-50 web:pointer-events-none',
           props.value === value && 'bg-background shadow-lg shadow-foreground/10',
           className
         )}

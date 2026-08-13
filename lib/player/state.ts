@@ -36,6 +36,10 @@ export const player$ = observable({
     endsAt: undefined,
     endOfChapter: false,
   } as SleepTimerState,
+  /** Where audio bytes come from: server stream or downloaded local files. */
+  sourceMode: 'stream' as 'stream' | 'local',
+  /** True when progress goes to the offline ledger instead of a live server session. */
+  isOfflineSession: false,
 });
 
 /** The chapter containing the current playback position, if any. */
@@ -44,6 +48,6 @@ export function getCurrentChapter(): BookChapter | undefined {
   const pos = player$.position.peek();
   if (!np?.chapters?.length) return undefined;
   return np.chapters.find(
-    (ch) => (ch.start ?? 0) <= pos && pos < (ch.end ?? Number.MAX_SAFE_INTEGER)
+    (ch) => ch != null && (ch.start ?? 0) <= pos && pos < (ch.end ?? Number.MAX_SAFE_INTEGER)
   );
 }
