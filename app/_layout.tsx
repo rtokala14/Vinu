@@ -83,8 +83,16 @@ export default function Layout() {
               store$.user.set(undefined);
             }
           } catch (error) {
-            console.error('Auto-authorization failed: ', error);
-            store$.user.set(undefined);
+            // Sign out ONLY when the server explicitly rejected the token.
+            // Network failures (offline, server down) must keep the persisted
+            // session so downloads and offline playback stay available.
+            const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+            if (status === 401 || status === 403) {
+              console.warn('Stored token rejected by server, signing out');
+              store$.user.set(undefined);
+            } else {
+              console.warn('Auto-authorization skipped (server unreachable):', error);
+            }
           }
         }
       } catch (e) {

@@ -1,4 +1,5 @@
 import * as Network from 'expo-network';
+import { Alert } from 'react-native';
 import TrackPlayer, { type AddTrack, State } from 'react-native-track-player';
 
 import { getDeviceId } from './deviceId';
@@ -67,6 +68,8 @@ let sessionId: string | undefined;
 let localSessionId: string | undefined;
 /** Epoch ms of the last pause of the loaded item — drives smart rewind. */
 let lastPauseAt: number | undefined;
+/** True while playLibraryItem is loading a new item (drops re-entrant calls). */
+let loadInFlight = false;
 
 let syncTimer: ReturnType<typeof setInterval> | undefined;
 let syncInFlight = false;
@@ -182,8 +185,10 @@ export async function syncNow(): Promise<void> {
         // Server is reachable — cheap hook point to drain the offline ledger.
         void flushLocalSessions();
       } catch {
-        // Offline / server hiccup: re-accumulate so the time isn't lost.
-        listenedSec += timeListened;
+        // Offline / server hiccup: re-accumulate so the time isn't lost —
+        // but only if this session is still the active one, so a failed
+        // sync can't credit its time to the next book's session.
+        if (sessionId === id) listenedSec += timeListened;
       }
     } else if (localSessionId) {
       updateLocalSession(localSessionId, {
@@ -265,16 +270,28 @@ export async function playLibraryItem(
     if (opts?.startAtTime !== undefined) {
       await seekTo(opts.startAtTime);
     } else if (!player$.isPlaying.peek()) {
-      await applySmartRewind();
+      if (player$.position.peek() >= current.duration - 1) {
+        // Finished book: restart from the top instead of resuming a dead queue.
+        await seekTo(0);
+      } else {
+        await applySmartRewind();
+      }
     }
     duckPaused = false;
     await TrackPlayer.play();
     return;
   }
 
+  // A load is already in progress (e.g. a double-tap) — drop this call
+  // instead of interleaving two queue builds / opening two sessions.
+  if (loadInFlight) return;
+  loadInFlight = true;
   player$.isLoading.set(true);
   try {
     await ensurePlayerSetup();
+
+    // A sleep timer armed for the previous book must not carry over.
+    cancelSleepTimer();
 
     // Tear down any previous session with a final sync before switching.
     if (sessionId || localSessionId) {
@@ -293,8 +310,12 @@ export async function playLibraryItem(
     await TrackPlayer.play();
   } catch (err) {
     console.warn('playLibraryItem failed:', err);
-    throw err;
+    Alert.alert(
+      'Playback failed',
+      "Couldn't start playback. Check your connection to the server and try again."
+    );
   } finally {
+    loadInFlight = false;
     player$.isLoading.set(false);
   }
 }
@@ -559,8 +580,11 @@ async function applySmartRewind(): Promise<void> {
   const pausedAt = lastPauseAt ?? localProgress$[np.libraryItemId].lastPauseAt.peek();
   if (!pausedAt) return;
   const rewind = smartRewindSeconds(Date.now() - pausedAt);
-  // Consume the pause so a rapid pause/play cycle can't stack rewinds.
+  // Consume the pause (module state AND the persisted fallback) so a rapid
+  // pause/play cycle or a second tap before RNTP reports Playing can't
+  // stack a second rewind.
   lastPauseAt = undefined;
+  localProgress$[np.libraryItemId].lastPauseAt.set(undefined);
   if (rewind <= 0) return;
   const target = Math.max(0, player$.position.peek() - rewind);
   await seekTo(target).catch(() => {});
@@ -579,6 +603,11 @@ export async function seekTo(globalSeconds: number): Promise<void> {
     await TrackPlayer.seekTo(offset);
   }
   player$.position.set(target);
+  // An armed end-of-chapter sleep timer tracks the chapter at the NEW
+  // position, not the one captured when it was armed.
+  if (player$.sleepTimer.endOfChapter.peek()) {
+    sleepChapterEnd = getCurrentChapter()?.end ?? np.duration;
+  }
   void syncNow();
 }
 
