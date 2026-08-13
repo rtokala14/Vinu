@@ -31,11 +31,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # Versions required by React Native 0.79 / Expo SDK 53. Gradle would
+      # auto-download them anyway; installing them up front keeps the build
+      # deterministic and avoids a mid-build fetch.
       - uses: android-actions/setup-android@v3
         with:
-          sdk-platform: 34
-          build-tools: 34.0.0
-          ndk: 26.1.10909125
+          sdk-platform: 35
+          build-tools: 35.0.0
+          ndk: 27.1.12297006
 
       # Release tag comes from the tag itself when tag-triggered, otherwise
       # from the app version in app.json. A branch build whose version tag
