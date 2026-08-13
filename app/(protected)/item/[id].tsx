@@ -19,6 +19,7 @@ import {
   getGetLibraryItemQueryKey,
   useGetLibraryItem,
 } from '~/api/queries/library-item/library-item';
+import { BookmarksSection } from '~/components/bookmarks/BookmarksSection';
 import { BackButton } from '~/components/detail/BackButton';
 import { ChapterRow } from '~/components/detail/ChapterRow';
 import { CollapsibleText } from '~/components/detail/CollapsibleText';
@@ -351,6 +352,9 @@ export default function ItemDetailScreen() {
               ))}
           </View>
         ) : null}
+
+        {/* Bookmarks */}
+        <BookmarksSection libraryItemId={id} />
 
         {/* Episodes (podcasts) */}
         {isPodcast && episodes.length > 0 ? (

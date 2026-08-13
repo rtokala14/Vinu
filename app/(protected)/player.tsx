@@ -13,6 +13,8 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BookChapter } from '~/api/models';
+import { BookmarkRow } from '~/components/bookmarks/BookmarkRow';
+import { RenameBookmarkModal } from '~/components/bookmarks/RenameBookmarkModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +24,17 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 import { Text } from '~/components/ui/text';
+import {
+  useBookmarks,
+  useCreateBookmark,
+  useDeleteBookmark,
+  useUpdateBookmark,
+  type BookmarkEntry,
+} from '~/lib/bookmarks';
+import { Bookmark } from '~/lib/icons/Bookmark';
+import { BookmarkPlus } from '~/lib/icons/BookmarkPlus';
+import { Car } from '~/lib/icons/Car';
+import { Check } from '~/lib/icons/Check';
 import { ChevronDown } from '~/lib/icons/ChevronDown';
 import { FastForward } from '~/lib/icons/FastForward';
 import { Gauge } from '~/lib/icons/Gauge';
@@ -34,6 +47,7 @@ import { SkipBack } from '~/lib/icons/SkipBack';
 import { SkipForward } from '~/lib/icons/SkipForward';
 import {
   cancelSleepTimer,
+  getCurrentChapter,
   jumpBackward,
   jumpForward,
   player$,
@@ -246,6 +260,49 @@ function ChapterList({ chapters, currentIndex }: { chapters: Chapter[]; currentI
 }
 
 // ---------------------------------------------------------------------------
+// Inline bookmark list
+// ---------------------------------------------------------------------------
+
+function BookmarkList({
+  libraryItemId,
+  onRename,
+}: {
+  libraryItemId: string;
+  onRename: (bookmark: BookmarkEntry) => void;
+}) {
+  const { data: bookmarks = [] } = useBookmarks(libraryItemId);
+  const deleteBookmark = useDeleteBookmark();
+
+  if (bookmarks.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center gap-2 px-8">
+        <Bookmark size={28} className="text-muted-foreground" />
+        <Text className="text-center text-sm text-muted-foreground">
+          No bookmarks yet. Tap the bookmark pill below to save your spot.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={bookmarks}
+      className="flex-1"
+      contentContainerClassName="pb-2"
+      keyExtractor={(bm) => String(bm.time)}
+      renderItem={({ item }) => (
+        <BookmarkRow
+          bookmark={item}
+          onPress={() => void seekTo(item.time)}
+          onEdit={() => onRename(item)}
+          onDelete={() => deleteBookmark.mutate({ libraryItemId, time: item.time })}
+        />
+      )}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
@@ -259,7 +316,48 @@ export default function PlayerScreen() {
   const jumpFwdSec = use$(store$.settings.jumpForwardSec);
   const jumpBackSec = use$(store$.settings.jumpBackwardsSec);
 
-  const [chaptersOpen, setChaptersOpen] = useState(false);
+  /** What fills the center of the screen: cover art or one of the lists. */
+  const [view, setView] = useState<'cover' | 'chapters' | 'bookmarks'>('cover');
+  const toggleView = (target: 'chapters' | 'bookmarks') =>
+    setView((v) => (v === target ? 'cover' : target));
+
+  // Bookmarks: instant create with a brief "Saved" flash, rename via modal.
+  const createBookmark = useCreateBookmark();
+  const updateBookmark = useUpdateBookmark();
+  const [renaming, setRenaming] = useState<BookmarkEntry | null>(null);
+  const [bookmarkSaved, setBookmarkSaved] = useState(false);
+  const savedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (savedTimeout.current) clearTimeout(savedTimeout.current);
+    },
+    []
+  );
+
+  const addBookmark = (thenRename: boolean) => {
+    const np = player$.nowPlaying.peek();
+    if (!np || createBookmark.isPending) return;
+    const time = Math.floor(player$.position.peek());
+    const title = getCurrentChapter()?.title ?? `Bookmark at ${formatClock(time)}`;
+    createBookmark.mutate(
+      { libraryItemId: np.libraryItemId, time, title },
+      {
+        onSuccess: (created) => {
+          setBookmarkSaved(true);
+          if (savedTimeout.current) clearTimeout(savedTimeout.current);
+          savedTimeout.current = setTimeout(() => setBookmarkSaved(false), 1600);
+          if (thenRename) {
+            setRenaming({
+              libraryItemId: np.libraryItemId,
+              time,
+              title: created.title ?? title,
+              createdAt: created.createdAt ?? Date.now(),
+            });
+          }
+        },
+      }
+    );
+  };
 
   // Sleep-timer countdown tick.
   const [now, setNow] = useState(() => Date.now());
@@ -310,12 +408,19 @@ export default function PlayerScreen() {
           <Text className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Now Playing
           </Text>
-          <View className="h-10 w-10" />
+          <Pressable
+            onPress={() => router.push('/car')}
+            hitSlop={8}
+            className="h-10 w-10 items-center justify-center rounded-full active:bg-muted">
+            <Car size={22} className="text-foreground" />
+          </Pressable>
         </View>
 
-        {/* Cover / chapter list */}
-        {chaptersOpen ? (
+        {/* Cover / chapter list / bookmark list */}
+        {view === 'chapters' ? (
           <ChapterList chapters={chapters} currentIndex={currentChapterIndex} />
+        ) : view === 'bookmarks' ? (
+          <BookmarkList libraryItemId={nowPlaying.libraryItemId} onRename={setRenaming} />
         ) : (
           <View className="flex-1 items-center justify-center gap-6">
             <View
@@ -398,7 +503,7 @@ export default function PlayerScreen() {
         </View>
 
         {/* Bottom pills */}
-        <View className="flex-row items-center justify-center gap-3 pb-2">
+        <View className="flex-row flex-wrap items-center justify-center gap-2 pb-2">
           <Pressable onPress={cycleRate} className={pillClass}>
             <Gauge size={16} className={rate !== 1 ? 'text-primary' : 'text-muted-foreground'} />
             <Text
@@ -438,18 +543,57 @@ export default function PlayerScreen() {
           </DropdownMenu>
 
           <Pressable
-            onPress={() => setChaptersOpen((open) => !open)}
-            className={cn(pillClass, chaptersOpen && 'border-primary')}>
+            onPress={() => toggleView('chapters')}
+            className={cn(pillClass, view === 'chapters' && 'border-primary')}>
             <ListMusic
               size={16}
-              className={chaptersOpen ? 'text-primary' : 'text-muted-foreground'}
+              className={view === 'chapters' ? 'text-primary' : 'text-muted-foreground'}
             />
-            <Text className={cn('text-sm font-semibold', chaptersOpen && 'text-primary')}>
+            <Text className={cn('text-sm font-semibold', view === 'chapters' && 'text-primary')}>
               Chapters
             </Text>
           </Pressable>
+
+          <Pressable
+            onPress={() => toggleView('bookmarks')}
+            className={cn(pillClass, view === 'bookmarks' && 'border-primary')}>
+            <Bookmark
+              size={16}
+              className={view === 'bookmarks' ? 'text-primary' : 'text-muted-foreground'}
+            />
+            <Text className={cn('text-sm font-semibold', view === 'bookmarks' && 'text-primary')}>
+              Bookmarks
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => addBookmark(false)}
+            onLongPress={() => addBookmark(true)}
+            className={cn(pillClass, bookmarkSaved && 'border-primary bg-primary/10')}>
+            {bookmarkSaved ? (
+              <>
+                <Check size={16} className="text-primary" />
+                <Text className="text-sm font-semibold text-primary">Saved</Text>
+              </>
+            ) : (
+              <BookmarkPlus size={16} className="text-muted-foreground" />
+            )}
+          </Pressable>
         </View>
       </View>
+
+      <RenameBookmarkModal
+        bookmark={renaming}
+        saving={updateBookmark.isPending}
+        onCancel={() => setRenaming(null)}
+        onSave={(title) => {
+          if (!renaming) return;
+          updateBookmark.mutate(
+            { libraryItemId: renaming.libraryItemId, time: renaming.time, title },
+            { onSettled: () => setRenaming(null) }
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
