@@ -9,6 +9,7 @@ import {
   handleRemoteSeek,
   jumpBackward,
   jumpForward,
+  resumePlayback,
   syncNow,
 } from './actions';
 
@@ -18,8 +19,10 @@ import {
  * actions (which keep player$ and the ABS session in sync).
  */
 export async function PlaybackService(): Promise<void> {
+  // Smart rewind applies here too — the notification play button is the most
+  // common way to resume after a long break.
   TrackPlayer.addEventListener(Event.RemotePlay, () => {
-    void TrackPlayer.play();
+    void resumePlayback();
   });
 
   TrackPlayer.addEventListener(Event.RemotePause, async () => {

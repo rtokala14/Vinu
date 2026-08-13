@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useGetLibraries, useGetPersonalizedLibrary } from '~/api/queries/libraries/libraries';
+import { OfflineBanner } from '~/components/downloads/OfflineBanner';
 import { CARD_WIDTH } from '~/components/home/BookCard';
 import { LibrarySwitcher } from '~/components/home/LibrarySwitcher';
 import { ShelfRow } from '~/components/home/ShelfRow';
@@ -85,6 +86,7 @@ export default function HomePage() {
         </View>
         <LibrarySwitcher />
       </View>
+      <OfflineBanner />
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-6 pb-8"

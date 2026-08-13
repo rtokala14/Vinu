@@ -27,6 +27,7 @@ import { EpisodeRow } from '~/components/detail/EpisodeRow';
 import { ProgressBar } from '~/components/detail/ProgressBar';
 import { stripHtml } from '~/components/detail/helpers';
 import type { ItemDetail } from '~/components/detail/types';
+import { DownloadButton } from '~/components/downloads/DownloadButton';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
@@ -295,14 +296,21 @@ export default function ItemDetailScreen() {
             )}
             <Text>{playLabel}</Text>
           </Button>
-          <Button
-            variant="outline"
-            className="mt-3 w-full flex-row items-center justify-center gap-2"
-            disabled={toggleFinished.isPending}
-            onPress={() => toggleFinished.mutate(!isFinished)}>
-            <CircleCheck size={18} className={isFinished ? 'text-primary' : 'text-foreground'} />
-            <Text>{isFinished ? 'Mark Unfinished' : 'Mark Finished'}</Text>
-          </Button>
+          <View className="mt-3 w-full flex-row items-stretch gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 flex-row items-center justify-center gap-2"
+              disabled={toggleFinished.isPending}
+              onPress={() => toggleFinished.mutate(!isFinished)}>
+              <CircleCheck size={18} className={isFinished ? 'text-primary' : 'text-foreground'} />
+              <Text>{isFinished ? 'Mark Unfinished' : 'Mark Finished'}</Text>
+            </Button>
+            {!isPodcast ? (
+              <View className="flex-1">
+                <DownloadButton itemId={id} />
+              </View>
+            ) : null}
+          </View>
 
           {/* Description */}
           {description ? (

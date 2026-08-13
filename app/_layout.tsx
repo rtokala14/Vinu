@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 import { NAV_THEME } from '~/lib/constants';
+import { initOfflineSessionSync, pruneLocalProgress, reconcileDownloads } from '~/lib/downloads';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { store$ } from '~/stores';
 
@@ -57,6 +58,12 @@ export default function Layout() {
         const resolvedTheme = theme === 'system' ? (Appearance.getColorScheme() ?? 'dark') : theme;
         setColorScheme(theme);
         setAndroidNavigationBar(resolvedTheme);
+
+        // Downloads/offline: verify local files, arm the offline-session
+        // ledger flush (network regain + app foreground), drop stale progress.
+        void reconcileDownloads();
+        initOfflineSessionSync();
+        void pruneLocalProgress();
 
         if (serverUrl && userToken !== undefined) {
           try {

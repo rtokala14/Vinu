@@ -1,11 +1,25 @@
-import { MMKV } from 'react-native-mmkv';
+import * as Network from 'expo-network';
 import TrackPlayer, { type AddTrack, State } from 'react-native-track-player';
 
+import { getDeviceId } from './deviceId';
 import { ensurePlayerSetup } from './setup';
 import { getCurrentChapter, player$ } from './state';
 
 import { customAxios } from '~/api/custom-axios';
 import { BookChapter } from '~/api/models';
+import {
+  flushLocalSessions,
+  hasPendingSessionsFor,
+  setActiveLocalSession,
+  startLocalSession,
+  updateLocalSession,
+} from '~/lib/downloads/offlineSessions';
+import {
+  type DownloadEntry,
+  downloads$,
+  localProgress$,
+  resolveDownloadUri,
+} from '~/lib/downloads/state';
 import { getCoverUri } from '~/lib/utils';
 import { store$ } from '~/stores';
 
@@ -47,7 +61,12 @@ type LoadedTrack = { startOffset: number; duration: number };
 
 let loadedTracks: LoadedTrack[] = [];
 let activeTrackIndex = 0;
+/** Open ABS server session id (streaming OR local-source-with-live-sync). */
 let sessionId: string | undefined;
+/** Offline ledger session id — set instead of sessionId when unreachable. */
+let localSessionId: string | undefined;
+/** Epoch ms of the last pause of the loaded item — drives smart rewind. */
+let lastPauseAt: number | undefined;
 
 let syncTimer: ReturnType<typeof setInterval> | undefined;
 let syncInFlight = false;
@@ -66,17 +85,6 @@ let duckPaused = false;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const deviceStorage = new MMKV({ id: 'vinu-player' });
-
-function getDeviceId(): string {
-  let id = deviceStorage.getString('deviceId');
-  if (!id) {
-    id = `vinu-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
-    deviceStorage.set('deviceId', id);
-  }
-  return id;
-}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -106,6 +114,23 @@ function flushListened(): void {
   }
 }
 
+/**
+ * Persists the last-known position for the loaded item to the local progress
+ * map — kept in BOTH streaming and local modes so offline playback can resume
+ * without the server. Called at every sync point (15s loop, pause, seek).
+ */
+function recordLocalProgress(extra?: { lastPauseAt?: number }): void {
+  const np = player$.nowPlaying.peek();
+  if (!np) return;
+  const prev = localProgress$[np.libraryItemId].peek();
+  localProgress$[np.libraryItemId].set({
+    ...prev,
+    currentTime: player$.position.peek(),
+    updatedAt: Date.now(),
+    ...(extra?.lastPauseAt !== undefined ? { lastPauseAt: extra.lastPauseAt } : {}),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Progress sync engine
 // ---------------------------------------------------------------------------
@@ -127,29 +152,45 @@ function stopSyncLoop(): void {
 }
 
 /**
- * Fire-and-forget progress sync to the open ABS session. Never throws —
- * offline failures keep the listened time and retry on the next sync.
+ * Fire-and-forget progress sync, split by session mode: a live ABS server
+ * session posts to /api/session/:id/sync; an offline session accumulates in
+ * the persisted local ledger. Never throws — server failures keep the
+ * listened time and retry on the next sync. Local position is persisted in
+ * both modes.
  */
 export async function syncNow(): Promise<void> {
-  if (!sessionId || syncInFlight) return;
+  if (syncInFlight) return;
+  if (!sessionId && !localSessionId) return;
   syncInFlight = true;
   flushListened();
   const timeListened = listenedSec;
   listenedSec = 0;
-  const id = sessionId;
+  recordLocalProgress();
   try {
-    await customAxios({
-      url: `/api/session/${id}/sync`,
-      method: 'POST',
-      data: {
+    if (sessionId) {
+      const id = sessionId;
+      try {
+        await customAxios({
+          url: `/api/session/${id}/sync`,
+          method: 'POST',
+          data: {
+            currentTime: player$.position.peek(),
+            timeListened,
+            duration: player$.nowPlaying.peek()?.duration ?? 0,
+          },
+        });
+        // Server is reachable — cheap hook point to drain the offline ledger.
+        void flushLocalSessions();
+      } catch {
+        // Offline / server hiccup: re-accumulate so the time isn't lost.
+        listenedSec += timeListened;
+      }
+    } else if (localSessionId) {
+      updateLocalSession(localSessionId, {
         currentTime: player$.position.peek(),
-        timeListened,
-        duration: player$.nowPlaying.peek()?.duration ?? 0,
-      },
-    });
-  } catch {
-    // Offline / server hiccup: re-accumulate so the time isn't lost.
-    listenedSec += timeListened;
+        deltaListened: timeListened,
+      });
+    }
   } finally {
     syncInFlight = false;
   }
@@ -158,13 +199,29 @@ export async function syncNow(): Promise<void> {
 /** Final sync + close of the currently open session, then clears session state. */
 async function closeSession(): Promise<void> {
   stopSyncLoop();
-  const id = sessionId;
-  sessionId = undefined;
-  if (!id) return;
   flushListened();
   playingSince = undefined;
   const timeListened = listenedSec;
   listenedSec = 0;
+  recordLocalProgress();
+
+  // Offline session: final update, leave it in the ledger for the next flush.
+  const localId = localSessionId;
+  localSessionId = undefined;
+  if (localId) {
+    updateLocalSession(localId, {
+      currentTime: player$.position.peek(),
+      deltaListened: timeListened,
+    });
+    setActiveLocalSession(undefined);
+    player$.isOfflineSession.set(false);
+    void flushLocalSessions();
+    return;
+  }
+
+  const id = sessionId;
+  sessionId = undefined;
+  if (!id) return;
   try {
     await customAxios({
       url: `/api/session/${id}/close`,
@@ -185,8 +242,14 @@ async function closeSession(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Opens an ABS play session for the item and starts playback. If the same
- * item (and episode) is already loaded, simply resumes instead.
+ * Loads the item and starts playback. If the same item (and episode) is
+ * already loaded, simply resumes (with smart rewind) instead.
+ *
+ * Source selection: a fully downloaded book plays from local files. When the
+ * server is reachable a normal server session is STILL opened for live
+ * progress sync (local bytes + live sync); when it is not, progress goes to
+ * the persisted offline ledger and position resumes from the local progress
+ * map. Podcast episodes and non-downloaded items stream as before.
  */
 export async function playLibraryItem(
   itemId: string,
@@ -195,11 +258,15 @@ export async function playLibraryItem(
   const current = player$.nowPlaying.peek();
   if (
     current &&
-    sessionId &&
+    (sessionId || localSessionId) &&
     current.libraryItemId === itemId &&
     current.episodeId === opts?.episodeId
   ) {
-    if (opts?.startAtTime !== undefined) await seekTo(opts.startAtTime);
+    if (opts?.startAtTime !== undefined) {
+      await seekTo(opts.startAtTime);
+    } else if (!player$.isPlaying.peek()) {
+      await applySmartRewind();
+    }
     duckPaused = false;
     await TrackPlayer.play();
     return;
@@ -210,20 +277,148 @@ export async function playLibraryItem(
     await ensurePlayerSetup();
 
     // Tear down any previous session with a final sync before switching.
-    if (sessionId) {
+    if (sessionId || localSessionId) {
       await TrackPlayer.pause().catch(() => {});
       await closeSession();
     }
 
-    const serverUrl = store$.settings.serverUrl.peek();
-    const token = store$.userToken.peek() ?? '';
-    const path = opts?.episodeId
-      ? `/api/items/${itemId}/play/${opts.episodeId}`
-      : `/api/items/${itemId}/play`;
+    const download = opts?.episodeId ? undefined : downloads$[itemId].peek();
+    if (download?.status === 'complete' && download.files.length > 0) {
+      await startLocalPlayback(itemId, download, opts?.startAtTime);
+    } else {
+      await startStreamingPlayback(itemId, opts);
+    }
 
-    const session = await customAxios<PlaySessionResponse>({
-      url: path,
+    startSyncLoop();
+    await TrackPlayer.play();
+  } catch (err) {
+    console.warn('playLibraryItem failed:', err);
+    throw err;
+  } finally {
+    player$.isLoading.set(false);
+  }
+}
+
+/** Opens the standard streaming play session and loads the RNTP queue from it. */
+async function startStreamingPlayback(
+  itemId: string,
+  opts?: { episodeId?: string; startAtTime?: number }
+): Promise<void> {
+  const serverUrl = store$.settings.serverUrl.peek();
+  const token = store$.userToken.peek() ?? '';
+  const path = opts?.episodeId
+    ? `/api/items/${itemId}/play/${opts.episodeId}`
+    : `/api/items/${itemId}/play`;
+
+  const session = await customAxios<PlaySessionResponse>({
+    url: path,
+    method: 'POST',
+    data: {
+      deviceInfo: { clientName: 'Vinu', deviceId: getDeviceId() },
+      supportedMimeTypes: [
+        'audio/flac',
+        'audio/mpeg',
+        'audio/mp4',
+        'audio/ogg',
+        'audio/aac',
+        'audio/webm',
+      ],
+      mediaPlayer: 'vinu',
+      forceDirectPlay: true,
+    },
+  });
+
+  const audioTracks = session.audioTracks ?? [];
+  if (audioTracks.length === 0) {
+    throw new Error('Play session returned no audio tracks');
+  }
+
+  loadedTracks = audioTracks.map((t) => ({
+    startOffset: t.startOffset ?? 0,
+    duration: t.duration ?? 0,
+  }));
+  const totalDuration = loadedTracks.reduce((sum, t) => sum + t.duration, 0);
+
+  const chapters = (session.libraryItem?.media?.chapters ?? session.chapters ?? []).filter(
+    (ch): ch is NonNullable<BookChapter> => ch != null
+  );
+  const metadata = session.libraryItem?.media?.metadata;
+  const title = metadata?.title ?? session.displayTitle ?? 'Unknown title';
+  const authorName = metadata?.authorName ?? session.displayAuthor ?? '';
+  const coverUri = getCoverUri(itemId, serverUrl);
+  const artwork = coverUri ? `${coverUri}&token=${encodeURIComponent(token)}` : undefined;
+  const rate = store$.settings.playbackRate.peek() || 1;
+
+  const queue: AddTrack[] = audioTracks.map((t) => ({
+    url: `${serverUrl}${t.contentUrl}?token=${encodeURIComponent(token)}`,
+    contentType: t.mimeType,
+    title,
+    artist: authorName,
+    album: title,
+    artwork,
+    duration: t.duration,
+    headers: { Authorization: `Bearer ${token}` },
+  }));
+
+  const startTime = clamp(opts?.startAtTime ?? session.currentTime ?? 0, 0, totalDuration);
+  const { index, offset } = trackForPosition(startTime);
+
+  await TrackPlayer.reset();
+  await TrackPlayer.add(queue);
+  await TrackPlayer.skip(index, offset);
+  await TrackPlayer.setRate(rate);
+
+  sessionId = session.id;
+  localSessionId = undefined;
+  activeTrackIndex = index;
+  listenedSec = 0;
+  playingSince = undefined;
+  duckPaused = false;
+  lastPauseAt = localProgress$[itemId].lastPauseAt.peek();
+
+  player$.sourceMode.set('stream');
+  player$.isOfflineSession.set(false);
+  player$.nowPlaying.set({
+    libraryItemId: itemId,
+    episodeId: opts?.episodeId,
+    title,
+    authorName,
+    coverUri,
+    duration: totalDuration,
+    chapters,
+    sessionId: session.id,
+  });
+  player$.position.set(startTime);
+  player$.playbackRate.set(rate);
+}
+
+/**
+ * Loads the RNTP queue from downloaded files — zero bandwidth. Opens a live
+ * server session when reachable (for real-time sync) and falls back to an
+ * offline ledger session otherwise.
+ */
+async function startLocalPlayback(
+  itemId: string,
+  download: DownloadEntry,
+  startAtTime?: number
+): Promise<void> {
+  const meta = download.itemMeta;
+  loadedTracks = download.files.map((f) => ({
+    startOffset: f.startOffset,
+    duration: f.duration,
+  }));
+  const totalDuration = meta.duration || loadedTracks.reduce((sum, t) => sum + t.duration, 0);
+
+  // Session mode: try a normal server session (live sync + local bytes).
+  // Quick connectivity check first, then a short-timeout open with fallback.
+  let session: PlaySessionResponse | undefined;
+  const network = await Network.getNetworkStateAsync().catch(() => undefined);
+  const maybeOnline = network?.isConnected !== false;
+  if (maybeOnline) {
+    session = await customAxios<PlaySessionResponse>({
+      url: `/api/items/${itemId}/play`,
       method: 'POST',
+      timeout: 6_000,
       data: {
         deviceInfo: { clientName: 'Vinu', deviceId: getDeviceId() },
         supportedMimeTypes: [
@@ -237,75 +432,81 @@ export async function playLibraryItem(
         mediaPlayer: 'vinu',
         forceDirectPlay: true,
       },
-    });
-
-    const audioTracks = session.audioTracks ?? [];
-    if (audioTracks.length === 0) {
-      throw new Error('Play session returned no audio tracks');
-    }
-
-    loadedTracks = audioTracks.map((t) => ({
-      startOffset: t.startOffset ?? 0,
-      duration: t.duration ?? 0,
-    }));
-    const totalDuration = loadedTracks.reduce((sum, t) => sum + t.duration, 0);
-
-    const chapters = (session.libraryItem?.media?.chapters ?? session.chapters ?? []).filter(
-      (ch): ch is NonNullable<BookChapter> => ch != null
-    );
-    const metadata = session.libraryItem?.media?.metadata;
-    const title = metadata?.title ?? session.displayTitle ?? 'Unknown title';
-    const authorName = metadata?.authorName ?? session.displayAuthor ?? '';
-    const coverUri = getCoverUri(itemId, serverUrl);
-    const artwork = coverUri ? `${coverUri}&token=${encodeURIComponent(token)}` : undefined;
-    const rate = store$.settings.playbackRate.peek() || 1;
-
-    const queue: AddTrack[] = audioTracks.map((t) => ({
-      url: `${serverUrl}${t.contentUrl}?token=${encodeURIComponent(token)}`,
-      contentType: t.mimeType,
-      title,
-      artist: authorName,
-      album: title,
-      artwork,
-      duration: t.duration,
-      headers: { Authorization: `Bearer ${token}` },
-    }));
-
-    const startTime = clamp(opts?.startAtTime ?? session.currentTime ?? 0, 0, totalDuration);
-    const { index, offset } = trackForPosition(startTime);
-
-    await TrackPlayer.reset();
-    await TrackPlayer.add(queue);
-    await TrackPlayer.skip(index, offset);
-    await TrackPlayer.setRate(rate);
-
-    sessionId = session.id;
-    activeTrackIndex = index;
-    listenedSec = 0;
-    playingSince = undefined;
-    duckPaused = false;
-
-    player$.nowPlaying.set({
-      libraryItemId: itemId,
-      episodeId: opts?.episodeId,
-      title,
-      authorName,
-      coverUri,
-      duration: totalDuration,
-      chapters,
-      sessionId: session.id,
-    });
-    player$.position.set(startTime);
-    player$.playbackRate.set(rate);
-
-    startSyncLoop();
-    await TrackPlayer.play();
-  } catch (err) {
-    console.warn('playLibraryItem failed:', err);
-    throw err;
-  } finally {
-    player$.isLoading.set(false);
+    }).catch(() => undefined);
   }
+
+  // Resume position: server progress when we have it and nothing newer is
+  // waiting in the offline ledger; otherwise the locally persisted position.
+  const localResume = localProgress$[itemId].currentTime.peek();
+  let resumeFrom: number;
+  if (startAtTime !== undefined) {
+    resumeFrom = startAtTime;
+  } else if (session && !hasPendingSessionsFor(itemId)) {
+    resumeFrom = session.currentTime ?? localResume ?? 0;
+  } else {
+    resumeFrom = localResume ?? session?.currentTime ?? 0;
+  }
+  const startTime = clamp(resumeFrom, 0, totalDuration);
+
+  const chapters = meta.chapters.filter((ch): ch is NonNullable<BookChapter> => ch != null);
+  const coverUri = meta.coverLocalUri
+    ? resolveDownloadUri(meta.coverLocalUri)
+    : getCoverUri(itemId, store$.settings.serverUrl.peek());
+  const rate = store$.settings.playbackRate.peek() || 1;
+
+  const queue: AddTrack[] = download.files.map((f) => ({
+    url: resolveDownloadUri(f.localUri),
+    contentType: f.mimeType,
+    title: meta.title,
+    artist: meta.authorName,
+    album: meta.title,
+    artwork: coverUri || undefined,
+    duration: f.duration,
+  }));
+
+  const { index, offset } = trackForPosition(startTime);
+
+  await TrackPlayer.reset();
+  await TrackPlayer.add(queue);
+  await TrackPlayer.skip(index, offset);
+  await TrackPlayer.setRate(rate);
+
+  if (session) {
+    sessionId = session.id;
+    localSessionId = undefined;
+    player$.isOfflineSession.set(false);
+  } else {
+    sessionId = undefined;
+    localSessionId = startLocalSession({
+      libraryItemId: itemId,
+      mediaType: 'book',
+      displayTitle: meta.title,
+      displayAuthor: meta.authorName,
+      duration: totalDuration,
+      currentTime: startTime,
+    });
+    setActiveLocalSession(localSessionId);
+    player$.isOfflineSession.set(true);
+  }
+
+  activeTrackIndex = index;
+  listenedSec = 0;
+  playingSince = undefined;
+  duckPaused = false;
+  lastPauseAt = localProgress$[itemId].lastPauseAt.peek();
+
+  player$.sourceMode.set('local');
+  player$.nowPlaying.set({
+    libraryItemId: itemId,
+    title: meta.title,
+    authorName: meta.authorName,
+    coverUri,
+    duration: totalDuration,
+    chapters,
+    sessionId: sessionId ?? localSessionId ?? '',
+  });
+  player$.position.set(startTime);
+  player$.playbackRate.set(rate);
 }
 
 export async function togglePlayPause(): Promise<void> {
@@ -314,9 +515,55 @@ export async function togglePlayPause(): Promise<void> {
     await TrackPlayer.pause();
     void syncNow();
   } else {
-    duckPaused = false;
-    await TrackPlayer.play();
+    await resumePlayback();
   }
+}
+
+/**
+ * Resumes playback of the loaded item, applying smart rewind first so the
+ * position is already correct when the notification/lockscreen updates. Also
+ * used by the remote-play (notification) handler.
+ */
+export async function resumePlayback(): Promise<void> {
+  if (player$.nowPlaying.peek() && !player$.isPlaying.peek()) {
+    await applySmartRewind();
+  }
+  duckPaused = false;
+  await TrackPlayer.play();
+}
+
+// ---------------------------------------------------------------------------
+// Smart rewind — rewind on resume, scaled by how long the pause lasted.
+// ---------------------------------------------------------------------------
+
+/** Seconds to rewind for a pause of the given length. */
+function smartRewindSeconds(pausedForMs: number): number {
+  const MINUTE = 60_000;
+  if (pausedForMs < MINUTE) return 0;
+  if (pausedForMs < 10 * MINUTE) return 5;
+  if (pausedForMs < 60 * MINUTE) return 12;
+  if (pausedForMs < 24 * 60 * MINUTE) return 20;
+  return 30;
+}
+
+/**
+ * When enabled, seeks backwards before resuming based on the time since the
+ * last pause (module state, falling back to the persisted per-item value so
+ * it survives app restarts). No-op mid-duck or when nothing was paused.
+ */
+async function applySmartRewind(): Promise<void> {
+  if (!store$.settings.smartRewind.peek()) return;
+  if (duckPaused) return;
+  const np = player$.nowPlaying.peek();
+  if (!np) return;
+  const pausedAt = lastPauseAt ?? localProgress$[np.libraryItemId].lastPauseAt.peek();
+  if (!pausedAt) return;
+  const rewind = smartRewindSeconds(Date.now() - pausedAt);
+  // Consume the pause so a rapid pause/play cycle can't stack rewinds.
+  lastPauseAt = undefined;
+  if (rewind <= 0) return;
+  const target = Math.max(0, player$.position.peek() - rewind);
+  await seekTo(target).catch(() => {});
 }
 
 /** Seeks to a global book position (seconds), crossing tracks when needed. */
@@ -398,9 +645,12 @@ export async function stopPlayback(): Promise<void> {
   loadedTracks = [];
   activeTrackIndex = 0;
   duckPaused = false;
+  lastPauseAt = undefined;
   player$.nowPlaying.set(undefined);
   player$.isPlaying.set(false);
   player$.position.set(0);
+  player$.sourceMode.set('stream');
+  player$.isOfflineSession.set(false);
 }
 
 // ---------------------------------------------------------------------------
@@ -416,6 +666,10 @@ export function handlePlaybackState(state: State): void {
   } else if (!playing && wasPlaying) {
     flushListened();
     playingSince = undefined;
+    // Remember when we paused (module + persisted) for smart rewind, and
+    // capture the position so offline resume is exact even after an app kill.
+    lastPauseAt = Date.now();
+    recordLocalProgress({ lastPauseAt });
   }
   player$.isPlaying.set(playing);
 }

@@ -36,6 +36,10 @@ export const player$ = observable({
     endsAt: undefined,
     endOfChapter: false,
   } as SleepTimerState,
+  /** Where audio bytes come from: server stream or downloaded local files. */
+  sourceMode: 'stream' as 'stream' | 'local',
+  /** True when progress goes to the offline ledger instead of a live server session. */
+  isOfflineSession: false,
 });
 
 /** The chapter containing the current playback position, if any. */
