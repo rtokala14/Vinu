@@ -45,6 +45,7 @@ The release tag is derived from `expo.version` in `app.json`. A build publishes 
 
 ### Notes
 
+- `react-native-track-player` 4.1.2 is patched via bun `patchedDependencies` (`patches/react-native-track-player@4.1.2.patch`): its Kotlin `@ReactMethod`s were single-expression `scope.launch` calls returning `kotlinx.coroutines.Job`, which the New Architecture's interop layer cannot parse (`TurboModuleInteropUtils$ParsingException` → crash on first module access). The patch routes them through a `Unit`-returning wrapper. Remove the patch when RNTP ships New-Architecture support (5.x).
 - `newArchEnabled` is `true` in `app.json` (the Expo SDK 53 default) and must stay that way: `react-native-mmkv` 3.x is New-Architecture-only — it relies on codegen to generate `NativeMmkvPlatformContextSpec`, so an old-architecture build fails to compile. `react-native-track-player` 4.1 has no codegen config and runs as a legacy module through the interop layer. If RNTP ever misbehaves on the new architecture, downgrade MMKV to 2.x rather than flipping this flag.
 - After pulling changes that add native modules, rebuild the dev client (`bun run android`), a metro reload is not enough.
 - The playback service is registered in `index.js`; the ABS session lifecycle (open / sync / close) lives in `lib/player/actions.ts`.

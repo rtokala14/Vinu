@@ -85,5 +85,8 @@
     "extends": "universe/native",
     "root": true
   },
-  "private": true
+  "private": true,
+  "patchedDependencies": {
+    "react-native-track-player@4.1.2": "patches/react-native-track-player@4.1.2.patch"
+  }
 }
