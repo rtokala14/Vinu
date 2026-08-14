@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vinu",
     "slug": "Vinu",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "scheme": "Vinu",
     "web": {
       "bundler": "metro",
@@ -16,7 +16,8 @@
         {
           "launchMode": "most-recent"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -30,17 +31,21 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tokalarr.Vinu",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
-      "versionCode": 2,
+      "versionCode": 3,
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
